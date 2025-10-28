@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blackjack</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>BLACKJACK</h1>
+
+  <div id="chips">Chips: 100</div>
+
+  <div id="dealer-hand" class="hand"></div>
+  <div id="player-hand" class="hand"></div>
+
+  <p id="message">Place Your Bet</p>
+
+  <div id="bet-controls">
+    <p>Choose Bet:</p>
+    <button class="bet-btn" data-amount="10">10</button>
+    <button class="bet-btn" data-amount="20">20</button>
+    <button class="bet-btn" data-amount="50">50</button>
+    <p id="current-bet">Current Bet: 0</p>
+  </div>
+
+  <div class="buttons">
+    <button id="start-btn">Start</button>
+    <button id="hit-btn">Hit</button>
+    <button id="stand-btn">Stand</button>
+    <button id="restart-btn">Restart</button>
+  </div>
+
+  <script type="module">
+    import { startGame, hitCard, standGame, restartGame, setBet } from './js/game.js';
+
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('hit-btn').addEventListener('click', hitCard);
+    document.getElementById('stand-btn').addEventListener('click', standGame);
+    document.getElementById('restart-btn').addEventListener('click', restartGame);
+
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const amount = parseInt(e.target.dataset.amount);
+        setBet(amount);
+      });
+    });
+  </script>
+</body>
+</html>
