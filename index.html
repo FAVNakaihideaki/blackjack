@@ -8,21 +8,26 @@
 <body>
   <h1>BLACKJACK</h1>
 
+  <!-- チップ表示とリセット -->
   <div id="chips">Chips: 100</div>
+  <button id="reset-chips-btn" onclick="localStorage.clear(); location.reload();">Reset Chips</button>
 
+  <!-- 手札 -->
   <div id="dealer-hand" class="hand"></div>
   <div id="player-hand" class="hand"></div>
 
-  <p id="message">Place Your Bet</p>
-
-  <div id="bet-controls">
+  <!-- ベット選択 -->
+  <div id="bet-area">
     <p>Choose Bet:</p>
-    <button class="bet-btn" data-amount="10">10</button>
-    <button class="bet-btn" data-amount="20">20</button>
-    <button class="bet-btn" data-amount="50">50</button>
+    <div id="bet-buttons">
+      <button class="bet-btn" data-amount="10">10</button>
+      <button class="bet-btn" data-amount="20">20</button>
+      <button class="bet-btn" data-amount="50">50</button>
+    </div>
     <p id="current-bet">Current Bet: 0</p>
   </div>
 
+  <!-- 操作ボタン -->
   <div class="buttons">
     <button id="start-btn">Start</button>
     <button id="hit-btn">Hit</button>
@@ -30,14 +35,21 @@
     <button id="restart-btn">Restart</button>
   </div>
 
+  <!-- メッセージ欄 -->
+  <p id="message">Place Your Bet</p>
+
+  <!-- スクリプト（コメントは JS形式に変更済） -->
   <script type="module">
+    // Blackjackメインロジックを読み込み
     import { startGame, hitCard, standGame, restartGame, setBet } from './js/game.js';
 
+    // ゲーム操作イベント
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('hit-btn').addEventListener('click', hitCard);
     document.getElementById('stand-btn').addEventListener('click', standGame);
     document.getElementById('restart-btn').addEventListener('click', restartGame);
 
+    // ベットボタンイベント
     document.querySelectorAll('.bet-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         const amount = parseInt(e.target.dataset.amount);

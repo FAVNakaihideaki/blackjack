@@ -1,56 +1,71 @@
+/* 基本設定（全体共通） */
 body {
-  font-family: "Segoe UI", sans-serif;
-  background-color: #064663;
-  color: #fff;
-  text-align: center;
-  padding: 30px;
+  font-family: "Segoe UI", sans-serif;  /* 全体のフォント指定 */
+  background-color: #064663;            /* 背景：濃い青でカジノ風 */
+  color: #fff;                          /* テキスト色：白 */
+  text-align: center;                   /* 中央寄せ配置 */
+  padding: 30px;                        /* 全体余白 */
 }
 
 h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
+  font-size: 2.5rem;                    /* タイトルを大きく表示 */
+  margin-bottom: 20px;                  /* 下余白を確保 */
 }
 
-.hand {
-  margin: 10px auto;
-  font-size: 1.3rem;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 10px;
-  border-radius: 10px;
-  width: 70%;
-}
-
-#message {
-  margin: 15px 0;
-  font-size: 1.2rem;
-  min-height: 24px;
-}
-
-.buttons {
-  margin-top: 20px;
-}
-
+/* ボタン（共通デザイン） */
 button {
-  background-color: #1282a2;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 18px;
-  color: white;
+  background-color: #1282a2;            /* ベース色：青緑 */
+  border: none;                         /* 枠線なし */
+  border-radius: 8px;                   /* 角を丸く */
+  padding: 10px 18px;                   /* 余白 */
+  color: #fff;                          /* 文字色：白 */
   font-size: 1rem;
   margin: 5px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s;          /* ホバー時のアニメーション */
 }
-
 button:hover {
-  background-color: #1bb5d8;
+  background-color: #1bb5d8;            /* ホバー時の明るい色 */
 }
 
+/* 手札表示エリア（Dealer / Player） */
+.hand {
+  margin: 10px auto;                    /* 上下10px、中央寄せ */
+  font-size: 1.3rem;                    /* カードを見やすく */
+  background: rgba(255, 255, 255, 0.1); /* 半透明背景 */
+  padding: 10px;
+  border-radius: 10px;
+  width: 70%;                           /* 全体幅を7割に制限 */
+}
+
+/* チップ＆ベットエリア */
 #chips {
-  margin-bottom: 15px;
-  font-weight: bold;
+  margin-bottom: 10px;                  /* 下に余白 */
+  font-weight: bold;                    /* 強調表示 */
 }
 
 #bet-controls {
-  margin-bottom: 15px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* 操作ボタンの配置 */
+.buttons {
+  margin-top: 10px;                     /* 手札とボタンの間の余白 */
+}
+
+/* メッセージ欄（ボタン下に配置） */
+#message {
+  margin-top: 20px;                     /* ボタンとの間隔 */
+  font-size: 1.2rem;
+  min-height: 24px;                     /* 高さを確保（非表示時に崩れ防止） */
+}
+
+/* Resetボタン（チップ初期化） */
+#reset-chips-btn {
+  margin-top: 5px;
+  background-color: #444;               /* グレー調で他と区別 */
+}
+#reset-chips-btn:hover {
+  background-color: #666;               /* ホバー時に少し明るく */
 }
