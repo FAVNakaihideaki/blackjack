@@ -69,3 +69,10 @@ button:hover {
 #reset-chips-btn:hover {
   background-color: #666;               /* ホバー時に少し明るく */
 }
+
+.bet-btn[data-amount^="-"] {
+  background-color: #f88;
+}
+.bet-btn[data-amount^="+"] {
+  background-color: #8f8;
+}

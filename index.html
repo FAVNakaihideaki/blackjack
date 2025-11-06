@@ -20,9 +20,14 @@
   <div id="bet-area">
     <p>Choose Bet:</p>
     <div id="bet-buttons">
+      <!-- 増額 -->
       <button class="bet-btn" data-amount="10">10</button>
       <button class="bet-btn" data-amount="20">20</button>
       <button class="bet-btn" data-amount="50">50</button>
+      <!-- 減額 -->
+      <button class="bet-btn" data-amount="-10">-10</button>
+      <button class="bet-btn" data-amount="-20">-20</button>
+      <button class="bet-btn" data-amount="-50">-50</button>
     </div>
     <p id="current-bet">Current Bet: 0</p>
   </div>
@@ -32,21 +37,25 @@
     <button id="start-btn">Start</button>
     <button id="hit-btn">Hit</button>
     <button id="stand-btn">Stand</button>
+    <button id="double-btn">Double Down</button>
+    <button id="split-btn">Split</button>
     <button id="restart-btn">Restart</button>
   </div>
 
   <!-- メッセージ欄 -->
-  <p id="message">Place Your Bet</p>
+  <p id="message">チップをベットしてください</p>
 
   <!-- スクリプト（コメントは JS形式に変更済） -->
   <script type="module">
     // Blackjackメインロジックを読み込み
-    import { startGame, hitCard, standGame, restartGame, setBet } from './js/game.js';
+    import { startGame, hitCard, standGame, restartGame, setBet, doubleDown, splitHand } from './js/game.js';
 
     // ゲーム操作イベント
     document.getElementById('start-btn').addEventListener('click', startGame);
     document.getElementById('hit-btn').addEventListener('click', hitCard);
     document.getElementById('stand-btn').addEventListener('click', standGame);
+    document.getElementById('double-btn').addEventListener('click', doubleDown);
+    document.getElementById('split-btn').addEventListener('click', splitHand);
     document.getElementById('restart-btn').addEventListener('click', restartGame);
 
     // ベットボタンイベント
