@@ -64,8 +64,8 @@ export function updateButtons(state, playerHand, chips, bet) {
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn'); // 今は使っていないが安全対策
 
-  // チップボタン制御（class="chip-btn"）
-  const chipBtns = document.querySelectorAll('.chip-btn');
+  // --- チップボタン制御（class="chip-btn" または "bet-btn"）---
+  const chipBtns = document.querySelectorAll('.chip-btn, .bet-btn');
   chipBtns.forEach(btn => {
     // INIT以外（=PLAYER_TURN, DEALER_TURN, RESULT）は無効化
     btn.disabled = state !== 'INIT';
