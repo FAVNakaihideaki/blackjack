@@ -35,49 +35,56 @@ export function renderCurrentBet(bet) {
   document.getElementById('current-bet').textContent = `Current Bet: ${bet}`;
 }
 
+// ===========================================
 // ボタン活性制御
-// 各ボタンの有効・無効をゲームの状態に合わせて自動制御します。
-//
+// ===========================================
 // ・INIT          ：ベットとスタートだけ有効
 // ・PLAYER_TURN   ：Hit / Stand / Double / Split が有効
 // ・DEALER_TURN   ：全て無効
-// ・RESULT        ：Restart と Start（次ラウンド）を有効
+// ・RESULT        ：次ラウンド（Next）ボタンのみ有効
 export function updateButtons(state, playerHand, chips, bet) {
   const isPlayerTurn = state === 'PLAYER_TURN';
 
-  // Double Down 条件：プレイヤーターン中・手札2枚・チップ充分
   const canDouble =
     isPlayerTurn &&
     playerHand.length === 2 &&
     chips >= bet;
 
-  // Split 条件：プレイヤーターン中・手札2枚が同値・チップ充分
   const canSplit =
     isPlayerTurn &&
     playerHand.length === 2 &&
     playerHand[0]?.value === playerHand[1]?.value &&
     chips >= bet;
 
-  // ボタンのDOMを取得
+  // --- ボタン要素を取得 ---
   const hitBtn = document.getElementById('hit-btn');
   const standBtn = document.getElementById('stand-btn');
   const doubleBtn = document.getElementById('double-btn');
   const splitBtn = document.getElementById('split-btn');
   const startBtn = document.getElementById('start-btn');
-  const restartBtn = document.getElementById('restart-btn');
+  const restartBtn = document.getElementById('restart-btn'); // 今は使っていないが安全対策
 
-  // 状態に応じた活性・非活性制御
-  hitBtn.disabled = !isPlayerTurn;
-  standBtn.disabled = !isPlayerTurn;
-  doubleBtn.disabled = !canDouble;
-  splitBtn.disabled = !canSplit;
+  // チップボタン制御（class="chip-btn"）
+  const chipBtns = document.querySelectorAll('.chip-btn');
+  chipBtns.forEach(btn => {
+    // INIT以外（=PLAYER_TURN, DEALER_TURN, RESULT）は無効化
+    btn.disabled = state !== 'INIT';
+  });
 
-  // 🆕 RESULT状態でも次ラウンドを始められるように変更
-  startBtn.disabled = !(
-    (state === 'INIT' || state === 'RESULT') &&
-    bet > 0 &&
-    chips >= bet
-  );
+  // --- 各状態での活性制御 ---
+  if (hitBtn) hitBtn.disabled = !isPlayerTurn;
+  if (standBtn) standBtn.disabled = !isPlayerTurn;
+  if (doubleBtn) doubleBtn.disabled = !canDouble;
+  if (splitBtn) splitBtn.disabled = !canSplit;
 
-  restartBtn.disabled = !(state === 'RESULT');
+  // StartボタンはINIT時のみ有効
+  if (startBtn)
+    startBtn.disabled = !(
+      state === 'INIT' &&
+      bet > 0 &&
+      chips >= bet
+    );
+
+  // Restartボタン（存在する場合のみ）
+  if (restartBtn) restartBtn.disabled = !(state === 'RESULT');
 }

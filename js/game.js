@@ -87,21 +87,38 @@ export function hitCard() {
 
 // プレイヤー操作：Stand
 
-export function standGame() {
+export async function standGame() {          // ← async化
   if (state !== 'PLAYER_TURN') return;
 
-  // スプリット中で次の手がある場合
-  if (playerHands.length === 2 && currentHandIndex === 0) {
-    endRoundOrNextHand();
-    return;
+  state = 'DEALER_TURN';
+  renderMessage('ディーラーのターン...');
+  
+  // 新しいディーラー演出処理を呼び出し
+  await dealerTurn();                        // ← whileループの代わりに関数化
+
+  updateButtons(state, playerHand, chips, bet);
+}
+
+// ディーラーのターン：1秒後に伏せカードをめくり、その後1枚ずつ引く演出
+async function dealerTurn() {
+  // ① スタンド直後の1秒間 “間” を演出
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // ② ディーラーが伏せカードをめくる
+  renderHands(playerHand, dealerHand, false);
+  renderMessage('ディーラーが伏せカードをめくりました');
+  await new Promise(resolve => setTimeout(resolve, 1000)); // さらに1秒演出待機
+
+  // ③ ディーラーが17以上になるまで1枚ずつ引く
+  while (calcHandValue(dealerHand) < 17) {
+    dealerHand.push(deck.pop());
+    renderHands(playerHand, dealerHand, false);
+    renderMessage('ディーラーがカードを引きました...');
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 各ドローごとに1秒待機
   }
 
-  // 通常または2手目の最終手のとき
-  state = 'DEALER_TURN';
-  while (calcHandValue(dealerHand) < 17) dealerHand.push(deck.pop());
-
-  renderHands(playerHand, dealerHand, false);
-
+  // ④ ターン終了＆勝敗判定
+  renderMessage('ディーラーのターン終了');
   const p = calcHandValue(playerHand);
   const d = calcHandValue(dealerHand);
   judgeResult(p, d);
@@ -183,23 +200,96 @@ function endRoundOrNextHand() {
   }
 }
 
-// ラウンド終了処理
-
+// 💡 ラウンド終了処理
 function endRound() {
+  // チップ情報の更新と保存
   renderChips(chips);
   localStorage.setItem('chips', chips);
   state = 'RESULT';
-  if (chips <= 0) renderMessage('Game Over');
 
+  // スプリット関連の初期化
   playerHands = [];
   currentHandIndex = 0;
 
-// ボタン更新を呼び出し（Restart判定含む）
-updateButtons(state, playerHand, chips, bet);
+  // ベットをリセット
+  bet = 0;
+  renderCurrentBet(bet);
 
-// Restartボタンを確実に有効化
-const restartBtn = document.getElementById('restart-btn');
-if (restartBtn) restartBtn.disabled = false;
+  // ボタン状態を更新（Restart判定含む）
+  updateButtons(state, playerHand, chips, bet);
+
+  // 既存の「次のラウンドへ」ボタンがあれば削除
+  const existingNext = document.getElementById('next-round-btn');
+  if (existingNext) existingNext.remove();
+
+  // Game Over の場合は専用演出を追加
+  if (chips <= 0) {
+    renderMessage('あなたのチップは尽きました...');
+    
+    // 1秒後にGame Overメッセージ → さらに1秒後に再挑戦ボタン
+    setTimeout(() => {
+      renderMessage('Game Over');
+
+      const retryBtn = document.createElement('button');
+      retryBtn.id = 'retry-btn';
+      retryBtn.textContent = 'もう一度プレイする';
+      retryBtn.classList.add('next-round-btn');
+
+      const msgArea = document.getElementById('message');
+      if (msgArea) msgArea.insertAdjacentElement('afterend', retryBtn);
+
+      retryBtn.addEventListener('click', () => {
+        chips = 100;
+        bet = 0;
+        playerHand = [];
+        dealerHand = [];
+        renderChips(chips);
+        renderHands([], [], false);
+        renderMessage('ベットを選択してください');
+        updateButtons('INIT', [], chips, 0);
+        retryBtn.remove();
+        state = 'INIT';
+      });
+    }, 1000);
+
+    return; // Game Over 専用演出なのでここで終了
+  }
+
+  // 通常の「次のラウンドへ」処理
+  const nextButton = document.createElement('button');
+  nextButton.id = 'next-round-btn';
+  nextButton.textContent = '▶ 次のラウンドへ';
+  nextButton.classList.add('next-round-btn');
+
+  const msgArea = document.getElementById('message');
+  if (msgArea) msgArea.insertAdjacentElement('afterend', nextButton);
+
+  nextButton.addEventListener('click', () => {
+    renderHands([], [], false);              // 手札をクリア
+    renderMessage('ベットを選択してください'); // 案内メッセージ再表示
+    updateButtons('INIT', [], chips, 0);     // ボタン初期化
+    state = 'INIT';
+    nextButton.remove();
+  });
+}
+
+// 次ラウンド開始処理
+export function nextRound() {
+  state = 'INIT';
+  playerHand = [];
+  dealerHand = [];
+  playerHands = [];
+  currentHandIndex = 0;
+  bet = 0;
+
+  renderHands([], [], false);
+  renderCurrentBet(bet);
+  renderMessage('ベットを選択してください');
+  updateButtons(state, playerHand, chips, bet);
+
+  // ボタン無効化
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.disabled = true;
 }
 
 // ブラックジャック判定（最初の2枚がA＋10点札）
@@ -208,23 +298,4 @@ function isBlackjack(hand) {
   if (hand.length !== 2) return false;
   const vals = hand.map(c => c.value);
   return vals.includes('A') && ['10', 'J', 'Q', 'K'].some(v => vals.includes(v));
-}
-
-// リスタート処理
-
-export function restartGame() {
-  chips = 100;
-  bet = 0;
-  state = 'INIT';
-  playerHand = [];
-  dealerHand = [];
-  playerHands = [];
-  currentHandIndex = 0;
-
-  localStorage.setItem('chips', chips);
-  renderHands([], [], false);
-  renderChips(chips);
-  renderCurrentBet(bet);
-  renderMessage('ベットを選択してください');
-  updateButtons(state, playerHand, chips, bet);
 }
