@@ -89,3 +89,23 @@ button:hover {
 .next-round-btn:hover {
   background-color: #666;
 }
+
+/* 押せないボタンを灰色で表示 */
+button:disabled {
+  background-color: #555 !important;  /* グレー調 */
+  cursor: not-allowed;                /* 禁止マーク */
+  opacity: 0.6;                       /* 少し透過して無効感を出す */
+}
+
+#message {
+  line-height: 1.6;
+  text-align: left;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  width: 70%;
+  margin: 15px auto;
+}
+#message b {
+  color: #ffd700; /* 黄色でキーワードを強調 */
+}

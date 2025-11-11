@@ -40,7 +40,14 @@ export function startGame() {
   if (bet === 0) return renderMessage('ベットを選択してください');
   if (chips < bet) return renderMessage('チップが足りません');
 
-  renderMessage('ラウンド開始！');
+  renderMessage(`
+    カードが配られました！<br>
+    どの行動をするか選びましょう。<br><br>
+    <b>Hit：</b> もう1枚カードを引く<br>
+    <b>Stand：</b> 現在の手札で勝負する<br>
+    <b>Double Down：</b> ベットを倍にして1枚だけ引く（最初の2枚のときのみ）<br>
+    <b>Split：</b> 同じ点数のカードなら2手に分けてプレイ（例：10とKなど）
+  `);
 
   state = 'PLAYER_TURN';         // プレイヤーのターンに遷移
 
@@ -75,15 +82,24 @@ export function hitCard() {
 
   // カードを1枚引く
   playerHand.push(deck.pop());
-  renderHands(playerHand, dealerHand, true);
+  renderHands(playerHand, dealerHand, true, playerHands);
+
+  // ここでボタン状態を更新！
+  updateButtons(state, playerHand, chips, bet);
 
   // 合計が21を超えた場合はバースト（敗北）
   if (calcHandValue(playerHand) > 21) {
     renderMessage('バースト！あなたの負けです');
-    endRound();
+
+    // 💡 スプリット中の場合は「次の手へ」
+    if (playerHands.length === 2 && currentHandIndex === 0) {
+      setTimeout(() => endRoundOrNextHand(), 1000);
+    } else {
+      // 通常 or 2手目は普通にラウンド終了
+      setTimeout(() => endRound(), 1000);
+    }
   }
 }
-
 
 // プレイヤー操作：Stand
 
@@ -124,30 +140,69 @@ async function dealerTurn() {
   judgeResult(p, d);
 }
 
-// ダブルダウン処理
-export function doubleDown() {
+// ダブルダウン処理（演出＋バースト即終了対応）
+export async function doubleDown() {
   if (state !== 'PLAYER_TURN') return;
-  if (playerHand.length !== 2) return renderMessage('ダブルダウンは最初の2枚のときのみ実行できます');
-  if (chips < bet) return renderMessage('チップが足りません');
+  if (playerHand.length !== 2)
+    return renderMessage('ダブルダウンは最初の2枚のときのみ実行できます');
+  if (chips < bet)
+    return renderMessage('チップが足りません');
 
-  chips -= bet;  // ベット分追加支払い
+  // ベットを2倍にして支払い
+  chips -= bet;
   bet *= 2;
   renderChips(chips);
   renderCurrentBet(bet);
 
-  // カードを1枚追加し、自動的にスタンド
+  // ボタン無効化
+  updateButtons('DEALER_TURN', playerHand, chips, bet);
+
+  // メッセージ①
+  renderMessage('ダブルダウン！1枚引いてスタンドします...');
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  // メッセージ②：カードを引く演出
+  renderMessage('カードを引きました...');
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  // 実際にカードを配る
   playerHand.push(deck.pop());
   renderHands(playerHand, dealerHand, true);
 
-  standGame();
+  // バーストチェック（ここを新規追加！）
+  if (calcHandValue(playerHand) > 21) {
+    renderMessage('バースト！あなたの負けです');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    endRound();
+    return; // ← 即終了（ディーラーターンへ進まない）
+  }
+
+  // 少し見せてからスタンドへ
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  await standGame();
 }
 
 // スプリット処理
 export function splitHand() {
   if (state !== 'PLAYER_TURN') return;
-  if (playerHand.length !== 2) return renderMessage('スプリットは最初の2枚のときのみ実行できます');
-  if (playerHand[0].value !== playerHand[1].value) return renderMessage('同じ値のカードのみスプリット可能です');
-  if (chips < bet) return renderMessage('チップが足りません');
+  if (playerHand.length !== 2)
+    return renderMessage('スプリットは最初の2枚のときのみ実行できます');
+
+  // 🎯 スプリット可能判定（絵札はすべて10点扱い）
+  const getCardNumericValue = (card) => {
+    if (['J', 'Q', 'K'].includes(card.value)) return 10;
+    if (card.value === 'A') return 11;
+    return parseInt(card.value);
+  };
+
+  const v1 = getCardNumericValue(playerHand[0]);
+  const v2 = getCardNumericValue(playerHand[1]);
+
+  if (v1 !== v2)
+    return renderMessage('スプリットできるのは同じ点数（10や絵札同士など）のカードのみです');
+
+  if (chips < bet)
+    return renderMessage('チップが足りません');
 
   // ベット追加支払い
   chips -= bet;
@@ -162,27 +217,33 @@ export function splitHand() {
 
   // 1手目開始
   playerHand = playerHands[currentHandIndex];
-  renderHands(playerHand, dealerHand, true);
+  renderHands(playerHand, dealerHand, true, playerHands);
   renderMessage(`スプリット！手札${currentHandIndex + 1}をプレイ中`);
 }
 
 // 勝敗判定
-
 function judgeResult(p, d) {
   let msg = '';
 
-  if (p > 21) msg = 'バースト！あなたの負けです';                     // プレイヤーがバースト
-  else if (d > 21) { msg = 'ディーラーがバースト！あなたの勝ちです'; chips += bet * 2; } // ディーラーがバースト
-  else if (p > d) { msg = 'あなたの勝ちです'; chips += bet * 2; }  // 勝利
-  else if (p < d) msg = 'あなたの負けです';                       // 敗北
-  else { msg = '引き分けです'; chips += bet; }                    // 引き分け（ベット返還）
+  if (p > 21) msg = 'バースト！あなたの負けです';
+  else if (d > 21) { msg = 'ディーラーがバースト！あなたの勝ちです'; chips += bet * 2; }
+  else if (p > d) { msg = 'あなたの勝ちです'; chips += bet * 2; }
+  else if (p < d) msg = 'あなたの負けです';
+  else { msg = '引き分けです'; chips += bet; }
 
   renderMessage(msg);
 
-    // スプリット中の1手目なら次のハンドへ
-  if (playerHands.length === 2 && currentHandIndex === 0) {
-    endRoundOrNextHand();
+  // スプリット用修正ポイント
+  if (playerHands.length === 2) {
+    if (currentHandIndex === 0) {
+      // 1手目が終わった場合は、勝敗に関わらず次のハンドへ
+      endRoundOrNextHand();
+    } else {
+      // 2手目終了後にラウンド終了
+      endRound();
+    }
   } else {
+    // 通常プレイ（スプリットしてない）
     endRound();
   }
 }
@@ -193,14 +254,23 @@ function endRoundOrNextHand() {
   if (playerHands.length === 2 && currentHandIndex === 0) {
     currentHandIndex = 1;
     playerHand = playerHands[currentHandIndex];
-    renderHands(playerHand, dealerHand, true);
+
+    // スプリット用：両方の手を表示
+    renderHands(playerHand, dealerHand, true, playerHands);
+
+    // メッセージを明確に
     renderMessage(`次のハンド（ハンド${currentHandIndex + 1}）をプレイ中`);
+
+    // ✅ ボタンを再度有効化！
+    state = 'PLAYER_TURN';
+    updateButtons(state, playerHand, chips, bet);
+
   } else {
     endRound();
   }
 }
 
-// 💡 ラウンド終了処理
+// ラウンド終了処理
 function endRound() {
   // チップ情報の更新と保存
   renderChips(chips);
