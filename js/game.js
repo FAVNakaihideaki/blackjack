@@ -126,7 +126,7 @@ export async function hitCard() {
 
   // バーストしてなければ再度ボタン活性化
   updateButtons(state, playerHand, chips, bet);
-  renderMessage('次の行動を選びましょう（Hit / Stand / Double / Split）');
+  renderMessage('次の行動を選びましょう。');
 }
 
 // プレイヤー操作：Stand
