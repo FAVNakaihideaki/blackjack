@@ -5,6 +5,7 @@ import { renderHands, renderMessage, renderChips, renderCurrentBet,updateButtons
 
 
 // グローバル変数（ゲーム状態管理）
+
 let deck = [];             // 山札（52枚）
 let playerHand = [];       // プレイヤーの手札
 let dealerHand = [];       // ディーラーの手札
@@ -15,6 +16,7 @@ let state = 'INIT';        // ゲーム状態（INIT, PLAYER_TURN, DEALER_TURN, 
 // スプリット用
 let playerHands = [];   // スプリット用に複数の手を保持
 let currentHandIndex = 0; // 今どちらの手をプレイ中かを示す
+let splitResults = []; // スプリット各手の勝敗結果を記録
 
 // ベット設定処理
 
@@ -77,40 +79,66 @@ export function startGame() {
 
 // プレイヤー操作：Hit
 
-export function hitCard() {
+export async function hitCard() {
   if (state !== 'PLAYER_TURN') return;
 
-  // カードを1枚引く
+  // 一時的にボタン無効化（連打防止）
+  const hitBtn = document.getElementById('hit-btn');
+  const standBtn = document.getElementById('stand-btn');
+  const doubleBtn = document.getElementById('double-btn');
+  const splitBtn = document.getElementById('split-btn');
+  [hitBtn, standBtn, doubleBtn, splitBtn].forEach(btn => {
+    if (btn) btn.disabled = true;
+  });
+
+  // メッセージ①：「カードを引きます...」
+  renderMessage('カードを引きます...');
+  await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒待機演出
+
+  // 実際にカードを引く
   playerHand.push(deck.pop());
   renderHands(playerHand, dealerHand, true, playerHands);
 
-  // ここでボタン状態を更新！
-  updateButtons(state, playerHand, chips, bet);
-
-  // 合計が21を超えた場合はバースト（敗北）
+  // 合計値チェック
   if (calcHandValue(playerHand) > 21) {
     renderMessage('バースト！あなたの負けです');
 
-    // 💡 スプリット中の場合は「次の手へ」
-    if (playerHands.length === 2 && currentHandIndex === 0) {
-      setTimeout(() => endRoundOrNextHand(), 1000);
+    // スプリット中の場合
+    if (playerHands.length === 2) {
+      // 1手目なら次のハンドへ
+      if (currentHandIndex === 0) {
+        splitResults.push('バースト！あなたの負けです');
+        setTimeout(() => endRoundOrNextHand(), 1000);
+      } else {
+        // 2手目なら結果追加 → まとめ表示
+        splitResults.push('バースト！あなたの負けです');
+        setTimeout(() => {
+          renderSplitSummary();
+          endRound();
+        }, 1000);
+      }
     } else {
-      // 通常 or 2手目は普通にラウンド終了
+      // 通常プレイ
       setTimeout(() => endRound(), 1000);
     }
+    return; // ⚠️ ここで終了（再活性化しない）
   }
+
+  // バーストしてなければ再度ボタン活性化
+  updateButtons(state, playerHand, chips, bet);
+  renderMessage('次の行動を選びましょう（Hit / Stand / Double / Split）');
 }
 
 // プレイヤー操作：Stand
 
-export async function standGame() {          // ← async化
+export async function standGame() {          // async化
   if (state !== 'PLAYER_TURN') return;
 
   state = 'DEALER_TURN';
   renderMessage('ディーラーのターン...');
   
   // 新しいディーラー演出処理を呼び出し
-  await dealerTurn();                        // ← whileループの代わりに関数化
+  await dealerTurn();                        // whileループの代わりに関数化
 
   updateButtons(state, playerHand, chips, bet);
 }
@@ -234,16 +262,22 @@ function judgeResult(p, d) {
   renderMessage(msg);
 
   // スプリット用修正ポイント
+  // 勝敗メッセージを即時表示せず、集計のみ
   if (playerHands.length === 2) {
+    splitResults.push(msg);
+
     if (currentHandIndex === 0) {
-      // 1手目が終わった場合は、勝敗に関わらず次のハンドへ
-      endRoundOrNextHand();
+      // 1手目終了 → 次のハンドへ
+      renderMessage(`手札${currentHandIndex + 1}の結果を記録しました。次のハンドへ...`);
+      setTimeout(() => endRoundOrNextHand(), 800);
     } else {
-      // 2手目終了後にラウンド終了
+      // 2手目終了 → まとめて表示
+      renderSplitSummary();
       endRound();
     }
   } else {
-    // 通常プレイ（スプリットしてない）
+    // 通常プレイのみ即時表示
+    renderMessage(msg);
     endRound();
   }
 }
@@ -271,6 +305,7 @@ function endRoundOrNextHand() {
 }
 
 // ラウンド終了処理
+
 function endRound() {
   // チップ情報の更新と保存
   renderChips(chips);
@@ -343,12 +378,35 @@ function endRound() {
   });
 }
 
+// スプリット結果まとめ表示
+function renderSplitSummary() {
+  const wins = splitResults.filter(r => r.includes('勝ち')).length;
+  const loses = splitResults.filter(r => r.includes('負け')).length;
+  const draws = splitResults.filter(r => r.includes('引き分け')).length;
+
+  let totalMsg = '';
+  if (wins > loses) totalMsg = 'あなたの勝ち！';
+  else if (loses > wins) totalMsg = 'あなたの負け...';
+  else totalMsg = '引き分けです。';
+
+  renderMessage(`
+    <b>スプリット結果</b><br>
+    Hand1：${splitResults[0]}<br>
+    Hand2：${splitResults[1]}<br>
+    <hr>
+    🪄 ${totalMsg}
+  `);
+
+  splitResults = []; // 初期化
+}
+
 // 次ラウンド開始処理
 export function nextRound() {
   state = 'INIT';
   playerHand = [];
   dealerHand = [];
   playerHands = [];
+  splitResults = [];
   currentHandIndex = 0;
   bet = 0;
 
