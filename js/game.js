@@ -6,7 +6,7 @@ import { renderHands, renderMessage, renderChips, renderCurrentBet,updateButtons
 
 // グローバル変数（ゲーム状態管理）
 
-let deck = [];             // 山札（52枚）
+let deck = createDeck(); // 8デックで初期化
 let playerHand = [];       // プレイヤーの手札
 let dealerHand = [];       // ディーラーの手札
 let chips = parseInt(localStorage.getItem('chips')) || 100; // チップ（localStorageで保存）
@@ -53,8 +53,14 @@ export function startGame() {
 
   state = 'PLAYER_TURN';         // プレイヤーのターンに遷移
 
-  // 残りカードが少ない場合は山札を再生成
-  if (deck.length < 15) deck = createDeck();
+  // 🔁 山札が少なくなったら自動でリシャッフル（例：残り50枚）
+  if (deck.length < 50) {
+    renderMessage('🔄 山札をリシャッフルします...');
+    deck = createDeck();
+  }
+
+  // デバッグ用
+  console.log(`新ラウンド開始時の残りカード枚数: ${deck.length}`);
 
   // プレイヤーとディーラーに2枚ずつカードを配布
   playerHand = [deck.pop(), deck.pop()];
@@ -247,6 +253,10 @@ export function splitHand() {
   playerHand = playerHands[currentHandIndex];
   renderHands(playerHand, dealerHand, true, playerHands);
   renderMessage(`スプリット！手札${currentHandIndex + 1}をプレイ中`);
+
+  // スプリット後ボタン無効化
+  const splitBtn = document.getElementById('split-btn');
+  if (splitBtn) splitBtn.disabled = true;  // Splitボタンを完全に無効化
 }
 
 // 勝敗判定

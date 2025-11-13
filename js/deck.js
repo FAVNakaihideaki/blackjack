@@ -1,21 +1,21 @@
 // deck.js : カード生成・計算ロジック
 
-// 山札（トランプ52枚）を生成し、シャッフルする関数
-
-export function createDeck() {
-  // 各スート（♠, ♥, ♦, ♣）とカードの値（A〜K）を定義
+// 山札（8デック分を生成してシャッフル）
+export function createDeck(numDecks = 8) {
   const suits = ['♠', '♥', '♦', '♣'];
   const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   const deck = [];
 
-  // スート×値の全組み合わせでカードを生成（52枚）
-  suits.forEach(suit => {
-    values.forEach(value => {
-      deck.push({ suit, value });
+  // 🔹 8デック分のカードを生成
+  for (let n = 0; n < numDecks; n++) {
+    suits.forEach(suit => {
+      values.forEach(value => {
+        deck.push({ suit, value });
+      });
     });
-  });
+  }
 
-  // Fisher-Yatesアルゴリズムでランダムにシャッフル
+  // 🔹 Fisher-Yatesシャッフル
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -23,6 +23,7 @@ export function createDeck() {
 
   return deck;
 }
+
 
 // 手札の合計値を計算する関数
 
