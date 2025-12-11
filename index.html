@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Blackjack</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Auth0 SDK（UMD版）-->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <script>
+    // main.js で window.createAuth0Client として使用
+    window.createAuth0Client = auth0.createAuth0Client;
+  </script>
+</head>
+
+<body>
+
+  <div id="auth-buttons">
+    <button id="login-btn">Login</button>
+    <button id="logout-btn" style="display:none;">Logout</button>
+  </div>
+
+  <h1>BLACKJACK</h1>
+
+  <!-- チップ表示とリセット -->
+  <div id="stats-cards">
+    <p>名前: <span id="player-name">-</span></p>
+    <p>総試合数: <span id="total-games">0</span></p>
+    <p>勝ち: <span id="wins">0</span></p>
+    <p>負け: <span id="losses">0</span></p>
+    <p>引き分け: <span id="draws">0</span></p>
+    <p>勝率: <span id="win-rate">0%</span></p>
+    <p>最大チップ: <span id="max-chips">0</span></p>
+    <button id="reset-chips-btn" class="reset-btn">All Reset</button>
+  </div>
+
+  <div id="side-message">
+    <h4>Message</h4>
+    <div id="message"></div>
+  </div>
+
+  <!-- ディーラー表示 -->
+  <h2>Dealer（合計: <span id="dealer-total">0</span>）</h2>
+  <div id="dealer-cards" class="hand"></div>
+
+  <!-- プレイヤー表示 -->
+  <h2>Player（合計: <span id="player-total">0</span>）</h2>
+  <div id="player-cards" class="hand"></div>
+
+  <hr />
+
+  <!-- ベット UI -->
+  <div id="bet-area">
+    <p>Choose Bet:</p>
+    
+    <div>
+      Chips: <span id="chips">100</span>
+    </div>
+
+    <div id="bet-buttons">
+      <button class="bet-btn" data-amount="+10">+10</button>
+      <button class="bet-btn" data-amount="+20">+20</button>
+      <button class="bet-btn" data-amount="+50">+50</button>
+      <button class="bet-btn" data-amount="-10">-10</button>
+      <button class="bet-btn" data-amount="-20">-20</button>
+      <button class="bet-btn" data-amount="-50">-50</button>
+    </div>
+
+    <p>Current Bet: <span id="current-bet">0</span></p>
+  </div>
+
+  <hr />
+
+  <!-- 操作ボタン -->
+  <div class="buttons">
+    <button id="start-btn">Start</button>
+    <button id="hit-btn">Hit</button>
+    <button id="stand-btn">Stand</button>
+    <button id="double-btn">Double Down</button>
+    <button id="split-btn">Split</button>
+  </div>
+
+  <hr />
+
+  <div id="next-round-container"></div>
+
+  <!-- =============================== -->
+  <!--  📌 必須：Renderer → Main の順  -->
+  <!-- =============================== -->
+  <script type="module" src="./js/ui/renderer.js"></script>
+  <!-- DOMが生成された後に main.js を読み込む -->
+<script type="module" defer src="./js/main.js"></script>
+</body>
+</html>
