@@ -12,6 +12,24 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+// === DB の初期化（テーブル作成） ===
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player (
+      auth0_user_id TEXT PRIMARY KEY,
+      chips INTEGER NOT NULL,
+      wins INTEGER NOT NULL,
+      losses INTEGER NOT NULL,
+      draws INTEGER NOT NULL,
+      max_chips INTEGER NOT NULL
+    );
+  `);
+
+  console.log("Player table ready");
+}
+
+initDB();
+
 // __dirname を ES Module で使うための処理
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
