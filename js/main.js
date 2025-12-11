@@ -8,7 +8,7 @@ async function initAuth() {
     domain: "dev-n5rykvdin2zla61p.us.auth0.com",
     clientId: "TLSpVDVgBNzGn4U9P6oEISi7lZTfvjOD",
     authorizationParams: {
-      redirect_uri: "https://blackjack.vercel.app/",
+      redirect_uri: "https://blackjack-lime-ten.vercel.app/",
       prompt: "select_account",
     }
   });
