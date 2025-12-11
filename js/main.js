@@ -74,7 +74,7 @@ import {
   updateButtons,
   renderStats,
   loadGuestStats,
-} from './ui/dom/ui.js';
+} from './ui/ui.js';
 
 import { GameState } from './core/gameState.js';
 import { renderHands } from './ui/renderer.js';
