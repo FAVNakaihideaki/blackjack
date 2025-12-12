@@ -106,13 +106,16 @@ export function renderStats(player) {
 
   if (!gamesEl) return;
 
-  const total = player.total_games ?? 0;
-  const wins  = player.wins ?? 0;
+  const wins   = player.wins ?? 0;
   const losses = player.losses ?? 0;
-  const draws = player.draws ?? 0;
+  const draws  = player.draws ?? 0;
   const maxChips = player.max_chips ?? 100;
 
-  const rate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+  // ★ DB に total_games は存在しないので自前で計算
+  const total = wins + losses + draws;
+
+  // ★ 勝率計算
+  const rate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   gamesEl.textContent = total;
   winEl.textContent   = wins;
