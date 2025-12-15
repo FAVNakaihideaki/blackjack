@@ -115,15 +115,20 @@ export async function startGame() {
 
   // ブラックジャック判定
   if (isBlackjack(GameState.playerHand)) {
+
+    // ディーラーがブラックジャックの可能性なし → 即勝利
     if (!dealerHasBlackjackChance(GameState.dealerHand)) {
       const reward = GameState.bet * 2.5;
       GameState.chips += reward;
       renderChips(GameState.chips);
       renderMessage(`🃏 BLACKJACK  +${reward}  / Total: ${GameState.chips}`);
+
+      GameState.lastResult = 'WIN';
       endRound();
       return;
     }
 
+    // ディーラーのBJ確認フェーズ
     renderMessage('あなたはBJです。ディーラー確認中...');
     GameState.state = 'DEALER_TURN';
     updateButtons({});
@@ -131,18 +136,26 @@ export async function startGame() {
     await wait(1500);
     renderHands(GameState.playerHand, GameState.dealerHand, false);
 
+    // 両者ブラックジャック
     if (isDealerBlackjack(GameState.dealerHand)) {
       GameState.chips += GameState.bet;
       renderChips(GameState.chips);
       renderMessage('😐 両者ブラックジャック → 引き分け');
-    } else {
-      const reward = GameState.bet * 2.5;
-      GameState.chips += reward;
-      renderChips(GameState.chips);
-      renderMessage(`🎉 ブラックジャック勝ち！ +${reward}`);
+
+      GameState.lastResult = 'DRAW';
+      endRound();
+      return;
     }
 
+    // プレイヤーのみブラックジャック
+    const reward = GameState.bet * 2.5;
+    GameState.chips += reward;
+    renderChips(GameState.chips);
+    renderMessage(`🎉 ブラックジャック勝ち！ +${reward}`);
+
+    GameState.lastResult = 'WIN';
     endRound();
+    return;
   }
 }
 
