@@ -56,7 +56,24 @@ app.get("/api/player", async (req, res) => {
       `SELECT * FROM player WHERE auth0_user_id = $1`,
       [uid]
     );
-    res.json(result.rows[0] ?? null);
+
+    if (result.rows.length > 0) {
+      return res.json(result.rows[0]);
+    }
+
+    // すべてのログイン方式対応
+    await pool.query(
+      `INSERT INTO player (auth0_user_id, chips, wins, losses, draws, max_chips)
+       VALUES ($1, 100, 0, 0, 0, 100)`,
+      [uid]
+    );
+
+    const created = await pool.query(
+      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      [uid]
+    );
+
+    res.json(created.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
