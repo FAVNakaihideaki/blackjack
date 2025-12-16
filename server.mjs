@@ -166,15 +166,19 @@ app.post("/api/player/update", async (req, res) => {
 
 app.post("/api/game-result", async (req, res) => {
   try {
-    const auth0UserId = req.user.sub; // ← Google / GitHub / LINE 共通
     const {
+      uid,
       result,
       bet,
       payout,
-      isBlackjack = false,
-      isDouble = false,
-      isSplit = false,
+      is_blackjack = false,
+      is_double = false,
+      is_split = false
     } = req.body;
+
+    if (!uid || !result) {
+      return res.status(400).json({ error: "uid and result required" });
+    }
 
     await pool.query(
       `
@@ -184,17 +188,18 @@ app.post("/api/game-result", async (req, res) => {
         ($1, $2, $3, $4, $5, $6, $7)
       `,
       [
-        auth0UserId,
+        uid,
         result,
         bet,
         payout,
-        isBlackjack,
-        isDouble,
-        isSplit,
+        is_blackjack,
+        is_double,
+        is_split
       ]
     );
 
     res.json({ ok: true });
+
   } catch (err) {
     console.error("❌ game_results insert error:", err);
     res.status(500).json({ error: "failed to save game result" });

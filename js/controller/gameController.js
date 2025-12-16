@@ -546,26 +546,21 @@ async function goNextHand() {
   });
 }
 
-/* ラウンド終了（次ラウンドボタン追加 ＋ 統計再読み込み） */
+/* ラウンド終了 */
 async function endRound() {
+
   GameState.state = 'RESULT';
-
-  // チップ描画（一旦ローカル値）
   renderChips(GameState.chips);
-
-  // まずボタン全無効にしておく
   updateButtons({});
 
   /*============================
-    🟦 ゲストモード（DB更新なし）
+    🟦 ゲスト（DB保存なし）
   ============================*/
   if (!window.USER_ID) {
-    console.log("🎮 ゲストのため DB更新をスキップ");
-
     const g = GameState.guestStats;
 
     g.total_games++;
-    if (GameState.lastResult === "WIN")  g.wins++;
+    if (GameState.lastResult === "WIN") g.wins++;
     if (GameState.lastResult === "LOSE") g.losses++;
     if (GameState.lastResult === "DRAW") g.draws++;
 
@@ -577,70 +572,58 @@ async function endRound() {
     GameState.bet = 0;
     GameState.lastResult = null;
     renderCurrentBet(0);
-
-    // 次ラウンドへボタン
     createNextRoundButton();
     return;
   }
 
   /*============================
-    🟩 ログイン済み → DB更新
+    🟩 ログイン済み（DB更新）
   ============================*/
   try {
-    // ① 履歴（game_results）に1行INSERT  ←★追加
-    // payout は「このラウンドで増えた分」を入れたい。
-    // もし GameState.lastPayout が用意できるならそれが一番確実。
-    const payout =
-      typeof GameState.lastPayout === "number"
-        ? GameState.lastPayout
-        : 0;
-
-    await fetch('/api/game-result', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        uid: window.USER_ID,
-        result: GameState.lastResult || 'DRAW',
-        bet: GameState.bet || 0,
-        payout, // ← まずは 0 でもOK（あとで精度上げられる）
-        isBlackjack: !!GameState.isBlackjackRound, // 無ければ false
-        isDouble: !!GameState.isDoubleDown,        // 無ければ false
-        isSplit: !!GameState.isSplitRound          // 無ければ false
-      })
-    });
-
-    // ② 集計（player）更新
+    /* ① 集計テーブル更新 */
     await fetch('/api/player/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         uid: window.USER_ID,
         chips: GameState.chips,
-        result: GameState.lastResult || 'DRAW'
+        result: GameState.lastResult
       })
     });
 
-    // ③ プレイヤーデータ再取得して同期
+    /* ② ★ 対局履歴テーブルに INSERT（←追加） */
+    await fetch('/api/game-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: window.USER_ID,
+        result: GameState.lastResult,
+        bet: GameState.bet,
+        payout: GameState.chips - GameState.startChips,
+        is_blackjack: GameState.isBlackjackRound || false,
+        is_double: GameState.usedDouble || false,
+        is_split: GameState.hasSplit || false
+      })
+    });
+
+    /* ③ 再取得して同期 */
     const res = await fetch(`/api/player?uid=${window.USER_ID}`);
     const data = await res.json();
 
     GameState.chips = data.chips;
     renderChips(data.chips);
-
     renderStats(data);
 
   } catch (err) {
     console.error("DB更新エラー:", err);
   }
 
-  // 共通処理（ベットリセットなど）
   GameState.bet = 0;
   GameState.lastResult = null;
-  renderCurrentBet(GameState.bet);
-
-  // 次ラウンドへボタン
+  renderCurrentBet(0);
   createNextRoundButton();
 }
+
 
 /* 次ラウンドボタン生成 */
 function createNextRoundButton() {
