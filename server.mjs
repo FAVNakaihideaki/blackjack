@@ -221,10 +221,9 @@ app.get("/api/game-results", async (req, res) => {
         is_blackjack,
         is_double,
         is_split,
-        created_at
       FROM game_results
       WHERE auth0_user_id = $1
-      ORDER BY created_at DESC
+      ORDER BY id DESC
       LIMIT $2
       `,
       [uid, limit]
