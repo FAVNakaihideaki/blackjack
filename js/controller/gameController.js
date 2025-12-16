@@ -626,7 +626,6 @@ async function endRound() {
   createNextRoundButton();
 }
 
-
 /* 次ラウンドボタン生成 */
 function createNextRoundButton() {
   const existing = document.getElementById('next-round-btn');
