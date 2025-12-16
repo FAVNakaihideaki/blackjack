@@ -546,9 +546,8 @@ async function goNextHand() {
   });
 }
 
-/* ラウンド終了（③⑥: 次ラウンドボタン追加 ＋ 統計再読み込み） */
+/* ラウンド終了（次ラウンドボタン追加 ＋ 統計再読み込み） */
 async function endRound() {
-
   GameState.state = 'RESULT';
 
   // チップ描画（一旦ローカル値）
@@ -588,6 +587,29 @@ async function endRound() {
     🟩 ログイン済み → DB更新
   ============================*/
   try {
+    // ① 履歴（game_results）に1行INSERT  ←★追加
+    // payout は「このラウンドで増えた分」を入れたい。
+    // もし GameState.lastPayout が用意できるならそれが一番確実。
+    const payout =
+      typeof GameState.lastPayout === "number"
+        ? GameState.lastPayout
+        : 0;
+
+    await fetch('/api/game-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: window.USER_ID,
+        result: GameState.lastResult || 'DRAW',
+        bet: GameState.bet || 0,
+        payout, // ← まずは 0 でもOK（あとで精度上げられる）
+        isBlackjack: !!GameState.isBlackjackRound, // 無ければ false
+        isDouble: !!GameState.isDoubleDown,        // 無ければ false
+        isSplit: !!GameState.isSplitRound          // 無ければ false
+      })
+    });
+
+    // ② 集計（player）更新
     await fetch('/api/player/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -598,7 +620,7 @@ async function endRound() {
       })
     });
 
-    // プレイヤーデータ再取得して同期
+    // ③ プレイヤーデータ再取得して同期
     const res = await fetch(`/api/player?uid=${window.USER_ID}`);
     const data = await res.json();
 

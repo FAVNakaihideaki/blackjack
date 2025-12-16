@@ -164,6 +164,43 @@ app.post("/api/player/update", async (req, res) => {
   }
 });
 
+app.post("/api/game-result", async (req, res) => {
+  try {
+    const auth0UserId = req.user.sub; // ← Google / GitHub / LINE 共通
+    const {
+      result,
+      bet,
+      payout,
+      isBlackjack = false,
+      isDouble = false,
+      isSplit = false,
+    } = req.body;
+
+    await pool.query(
+      `
+      INSERT INTO game_results
+        (auth0_user_id, result, bet, payout, is_blackjack, is_double, is_split)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7)
+      `,
+      [
+        auth0UserId,
+        result,
+        bet,
+        payout,
+        isBlackjack,
+        isDouble,
+        isSplit,
+      ]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ game_results insert error:", err);
+    res.status(500).json({ error: "failed to save game result" });
+  }
+});
+
 // -----------------------------------------
 // ③ index.html を返す（SPA 対応）
 // -----------------------------------------
