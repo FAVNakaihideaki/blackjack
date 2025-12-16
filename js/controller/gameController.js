@@ -618,6 +618,8 @@ async function endRound() {
     console.error("DB更新エラー:", err);
   }
 
+  window.loadGameHistory?.(10);
+
   GameState.bet = 0;
   GameState.lastResult = null;
   renderCurrentBet(0);
