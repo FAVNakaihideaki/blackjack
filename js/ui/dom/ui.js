@@ -176,3 +176,38 @@ export function loadGuestStats() {
 export function saveGuestStats() {
   localStorage.setItem("bj_guest_stats", JSON.stringify(GameState.guestStats));
 }
+
+/**
+ * 対局履歴描画
+ */
+export function renderGameHistory(games = []) {
+  const listEl = document.getElementById('game-history-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  if (games.length === 0) {
+    listEl.innerHTML = '<li>まだ対局履歴がありません</li>';
+    return;
+  }
+
+  games.forEach(g => {
+    const li = document.createElement('li');
+
+    const icon =
+      g.result === 'WIN'  ? '🎉' :
+      g.result === 'LOSE' ? '💀' : '😐';
+
+    const extra = [
+      g.is_blackjack ? 'BJ' : '',
+      g.is_double ? 'DD' : '',
+      g.is_split ? 'SP' : ''
+    ].filter(Boolean).join(',');
+
+    li.textContent =
+      `${icon} ${g.result} ｜ Bet:${g.bet} ｜ Diff:${g.payout}` +
+      (extra ? ` ｜ ${extra}` : '');
+
+    listEl.appendChild(li);
+  });
+}

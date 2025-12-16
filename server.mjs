@@ -206,6 +206,37 @@ app.post("/api/game-result", async (req, res) => {
   }
 });
 
+// GET /api/game-results?uid=xxx&limit=10
+app.get("/api/game-results", async (req, res) => {
+  const { uid, limit = 10 } = req.query;
+  if (!uid) return res.status(400).json({ error: "uid required" });
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        result,
+        bet,
+        payout,
+        is_blackjack,
+        is_double,
+        is_split,
+        created_at
+      FROM game_results
+      WHERE auth0_user_id = $1
+      ORDER BY created_at DESC
+      LIMIT $2
+      `,
+      [uid, limit]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ game_results fetch error:", err);
+    res.status(500).json({ error: "failed to load game results" });
+  }
+});
+
 // -----------------------------------------
 // ③ index.html を返す（SPA 対応）
 // -----------------------------------------
