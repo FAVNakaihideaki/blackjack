@@ -74,6 +74,7 @@ import {
   updateButtons,
   renderStats,
   loadGuestStats,
+  renderGameHistory
 } from './ui/dom/ui.js';
 
 import { GameState } from './core/gameState.js';
@@ -195,6 +196,7 @@ async function loadPlayer() {
 window.addEventListener("load", async () => {
   await initAuth();
   await loadPlayer();
+  await loadGameHistory(10);
   renderCurrentBet(GameState.bet || 0);
   renderMessage("ベットを選択してください");
 
@@ -205,3 +207,24 @@ window.addEventListener("load", async () => {
     canBetDecrease: GameState.bet > 0,
   });
 });
+
+async function loadGameHistory(limit = 10) {
+  const listEl = document.getElementById('game-history-list');
+  if (!listEl) return;
+
+  // ゲストは履歴なし
+  if (!window.USER_ID) {
+    listEl.innerHTML = '<li>ログインすると対局履歴が表示されます</li>';
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `/api/game-results?uid=${window.USER_ID}&limit=${limit}`
+    );
+    const games = await res.json();
+    renderGameHistory(games);
+  } catch (err) {
+    console.error("履歴取得エラー:", err);
+  }
+}
