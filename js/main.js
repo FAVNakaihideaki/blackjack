@@ -212,7 +212,6 @@ async function loadGameHistory(limit = 10) {
   const listEl = document.getElementById('game-history-list');
   if (!listEl) return;
 
-  // ゲストは履歴なし
   if (!window.USER_ID) {
     listEl.innerHTML = '<li>ログインすると対局履歴が表示されます</li>';
     return;
@@ -220,11 +219,22 @@ async function loadGameHistory(limit = 10) {
 
   try {
     const res = await fetch(
-      `/api/game-results?uid=${window.USER_ID}&limit=${limit}`
+      `/api/game-results?uid=${encodeURIComponent(window.USER_ID)}&limit=${limit}`
     );
+
     const games = await res.json();
+
+    // 🔑 防御：配列以外は即空配列
+    if (!Array.isArray(games)) {
+      console.warn("履歴データが配列ではありません:", games);
+      renderGameHistory([]);
+      return;
+    }
+
     renderGameHistory(games);
+
   } catch (err) {
     console.error("履歴取得エラー:", err);
+    renderGameHistory([]);
   }
 }

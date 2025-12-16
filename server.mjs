@@ -209,7 +209,10 @@ app.post("/api/game-result", async (req, res) => {
 // GET /api/game-results?uid=xxx&limit=10
 app.get("/api/game-results", async (req, res) => {
   const { uid, limit = 10 } = req.query;
-  if (!uid) return res.status(400).json({ error: "uid required" });
+
+  if (!uid) {
+    return res.status(400).json({ error: "uid required" });
+  }
 
   try {
     const result = await pool.query(
@@ -220,19 +223,23 @@ app.get("/api/game-results", async (req, res) => {
         payout,
         is_blackjack,
         is_double,
-        is_split,
+        is_split
       FROM game_results
       WHERE auth0_user_id = $1
-      ORDER BY id DESC
+      ORDER BY played_at DESC, id DESC
       LIMIT $2
       `,
       [uid, limit]
     );
 
-    res.json(result.rows);
+    // 🔑 重要：データがなくても「空配列」を返す
+    return res.json(result.rows);
+
   } catch (err) {
     console.error("❌ game_results fetch error:", err);
-    res.status(500).json({ error: "failed to load game results" });
+
+    // 🔑 500 を返さない
+    return res.json([]);
   }
 });
 
