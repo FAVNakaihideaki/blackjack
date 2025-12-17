@@ -238,3 +238,5 @@ async function loadGameHistory(limit = 10) {
     renderGameHistory([]);
   }
 }
+
+window.loadGameHistory = loadGameHistory;
