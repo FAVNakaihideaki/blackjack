@@ -305,7 +305,8 @@ hr {
 ================================ */
 
 #layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: 260px minmax(600px, 700px) 260px;
   justify-content: center;
   gap: 30px;
   margin-top: 20px;
