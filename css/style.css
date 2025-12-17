@@ -144,3 +144,71 @@ button:disabled {
   font-size: 14px;
   line-height: 1.4;
 }
+
+/* ===============================
+   Buttons : 共通
+=============================== */
+
+button {
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s, opacity 0.2s;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 押せるときの軽い押下感 */
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* ===============================
+   チップ操作ボタン
+=============================== */
+
+/* + チップ（緑） */
+.bet-btn[data-amount^="+"]:not(:disabled) {
+  background: #2ecc71;
+}
+
+/* - チップ（赤） */
+.bet-btn[data-amount^="-"]:not(:disabled) {
+  background: #e74c3c;
+}
+
+/* ホバー時 */
+.bet-btn:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+/* ===============================
+   行動ボタン（青）
+=============================== */
+
+#start-btn:not(:disabled),
+#hit-btn:not(:disabled),
+#stand-btn:not(:disabled),
+#double-btn:not(:disabled),
+#split-btn:not(:disabled) {
+  background: #3498db;
+}
+
+/* 行動ボタン hover */
+#start-btn:not(:disabled):hover,
+#hit-btn:not(:disabled):hover,
+#stand-btn:not(:disabled):hover,
+#double-btn:not(:disabled):hover,
+#split-btn:not(:disabled):hover {
+  background: #5dade2;
+}
+
+/* ===============================
+   次のラウンドボタン（少し目立たせる）
+=============================== */
+
+#next-round-container button:not(:disabled) {
+  background: #f1c40f;
+  color: #333;
+}
