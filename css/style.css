@@ -299,3 +299,90 @@ hr {
   color: white;
   cursor: pointer;
 }
+
+/* ================================
+   全体3カラムレイアウト
+================================ */
+
+#layout {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+/* ================================
+   左：直近の対局（ログ）
+================================ */
+
+#left-panel {
+  width: 260px;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+#game-history h3 {
+  text-align: center;
+  font-size: 15px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  padding-bottom: 5px;
+}
+
+/* ・を消す */
+#game-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#game-history-list li {
+  font-size: 14px;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 最新の1戦を強調 */
+#game-history-list li:first-child {
+  font-weight: bold;
+}
+
+/* 勝敗色 */
+#game-history-list li.win {
+  color: #7CFC98;
+}
+#game-history-list li.lose {
+  color: #FF8A8A;
+}
+#game-history-list li.draw {
+  color: #FFD966;
+}
+
+/* ================================
+   中央：ゲーム本体
+================================ */
+
+#game-area {
+  flex: 1;
+  max-width: 700px;
+}
+
+/* ================================
+   スマホ対応（縦並び）
+================================ */
+
+@media (max-width: 1200px) {
+  #layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #left-panel {
+    width: 90%;
+    max-height: 200px;
+  }
+}
