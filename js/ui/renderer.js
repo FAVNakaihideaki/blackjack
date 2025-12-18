@@ -11,3 +11,6 @@ export function setRenderer(type = 'dom') {
 
 export const renderHands = (...args) =>
   currentRenderer.renderHands?.(...args);
+
+export const renderGameDetail = (detail) =>
+  currentRenderer.renderGameDetail?.(detail);

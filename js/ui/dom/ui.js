@@ -1,6 +1,7 @@
 // ui/dom/ui.js
 
 import { GameState } from "../../core/gameState.js";
+import { renderGameDetail } from '../renderer.js';
 
 /**
  * メッセージ表示
@@ -207,6 +208,12 @@ export function renderGameHistory(games = []) {
     li.textContent =
       `${icon} ${g.result} ｜ Bet:${g.bet} ｜ Diff:${g.payout}` +
       (extra ? ` ｜ ${extra}` : '');
+
+    // ★ クリックで詳細表示
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', () => {
+      renderGameDetail(g);
+    });
 
     listEl.appendChild(li);
   });

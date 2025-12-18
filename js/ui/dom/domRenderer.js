@@ -90,3 +90,35 @@ function createCardEl(card) {
 
   return el;
 }
+
+export function renderGameDetail(detail) {
+  const messageEl = document.getElementById('message');
+  if (!messageEl) return;
+
+  const {
+    result,
+    bet,
+    payout,
+    is_blackjack,
+    is_double,
+    is_split,
+    played_at
+  } = detail;
+
+  const flags = [
+    is_blackjack ? 'BLACKJACK' : null,
+    is_double ? 'DOUBLE' : null,
+    is_split ? 'SPLIT' : null,
+  ].filter(Boolean).join(' / ');
+
+  messageEl.innerHTML = `
+    <b>🃏 対局詳細</b><br><br>
+    結果：<b>${result}</b><br>
+    Bet：${bet}<br>
+    Diff：${payout}<br>
+    ${flags ? `特記事項：${flags}<br>` : ''}
+    日時：${played_at
+      ? new Date(played_at).toLocaleString()
+      : '-'}
+  `;
+}
