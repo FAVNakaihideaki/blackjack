@@ -99,6 +99,8 @@ export function renderGameDetail(detail) {
     result,
     bet,
     payout,
+    start_chips,
+    end_chips,
     is_blackjack,
     is_double,
     is_split,
@@ -111,11 +113,16 @@ export function renderGameDetail(detail) {
     is_split ? 'SPLIT' : null,
   ].filter(Boolean).join(' / ');
 
+  const chipLine =
+    start_chips != null && end_chips != null
+      ? `${start_chips} → ${end_chips}（${payout >= 0 ? '+' : ''}${payout}）`
+      : '—';
+
   messageEl.innerHTML = `
     <b>🃏 対局詳細</b><br><br>
     結果：<b>${result}</b><br>
     Bet：${bet}<br>
-    Diff：${payout}<br>
+    チップ：${chipLine}<br>
     ${flags ? `特記事項：${flags}<br>` : ''}
     日時：${played_at
       ? new Date(played_at).toLocaleString()
