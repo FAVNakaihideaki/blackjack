@@ -173,7 +173,9 @@ app.post("/api/game-result", async (req, res) => {
       payout,
       is_blackjack = false,
       is_double = false,
-      is_split = false
+      is_split = false,
+      start_chips,
+      end_chips
     } = req.body;
 
     if (!uid || !result) {
