@@ -183,9 +183,19 @@ app.post("/api/game-result", async (req, res) => {
     await pool.query(
       `
       INSERT INTO game_results
-        (auth0_user_id, result, bet, payout, is_blackjack, is_double, is_split)
+        (
+          auth0_user_id,
+          result,
+          bet,
+          payout,
+          is_blackjack,
+          is_double,
+          is_split,
+          start_chips,
+          end_chips
+        )
       VALUES
-        ($1, $2, $3, $4, $5, $6, $7)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       `,
       [
         uid,
@@ -194,7 +204,9 @@ app.post("/api/game-result", async (req, res) => {
         payout,
         is_blackjack,
         is_double,
-        is_split
+        is_split,
+        start_chips,
+        end_chips
       ]
     );
 
@@ -223,7 +235,10 @@ app.get("/api/game-results", async (req, res) => {
         payout,
         is_blackjack,
         is_double,
-        is_split
+        is_split,
+        start_chips,
+        end_chips,
+        played_at
       FROM game_results
       WHERE auth0_user_id = $1
       ORDER BY played_at DESC, id DESC

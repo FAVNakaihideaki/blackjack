@@ -600,6 +600,11 @@ async function endRound() {
         result: GameState.lastResult,
         bet: GameState.bet,
         payout: GameState.chips - GameState.startChips,
+
+        // ★ 追加
+        start_chips: GameState.startChips,
+        end_chips: GameState.chips,
+
         is_blackjack: GameState.isBlackjackRound || false,
         is_double: GameState.usedDouble || false,
         is_split: GameState.hasSplit || false
