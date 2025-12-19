@@ -111,20 +111,25 @@ betBtns.forEach(btn =>
 
 // リセットボタン
 resetBtn?.addEventListener('click', async () => {
+
+  /* =========================
+     共通：ラウンド状態リセット
+  ========================= */
   GameState.resetForNextRound?.();
   GameState.bet = 0;
 
   renderHands([], []);
   renderCurrentBet(0);
-  renderChips(GameState.chips);
-  renderMessage("ベットを選択してください");
 
   updateButtons({
     canStart: false,
-    canBetIncrease: GameState.chips > 0,
+    canBetIncrease: true,
     canBetDecrease: false,
   });
 
+  /* =========================
+     🟦 ゲストモード
+  ========================= */
   if (!window.USER_ID) {
     GameState.guestStats = {
       total_games: 0,
@@ -133,28 +138,51 @@ resetBtn?.addEventListener('click', async () => {
       draws: 0,
       max_chips: 100,
     };
+
     localStorage.removeItem("bj_guest_stats");
+
     GameState.chips = 100;
     renderChips(GameState.chips);
     renderStats({ guest: true });
+
+    renderGameHistory([]); // 念のためクリア
     renderMessage("ゲストデータを初期化しました");
     return;
   }
 
+  /* =========================
+     🟩 ログインユーザー
+  ========================= */
   try {
+    // ① player リセット
     const res = await fetch('/api/player/resetAll', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid: window.USER_ID }),
     });
 
+    // ② game_results 全削除
+    await fetch('/api/game-results/reset', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid: window.USER_ID }),
+    });
+
+    // ③ DB結果を反映
     const data = await res.json();
     GameState.chips = data.chips;
+
     renderChips(data.chips);
     renderStats(data);
+
+    // ④ UI履歴を即同期
+    renderGameHistory([]);
+
     renderMessage("データを初期化しました");
+
   } catch (err) {
     console.error("DB更新エラー:", err);
+    renderMessage("初期化に失敗しました");
   }
 });
 

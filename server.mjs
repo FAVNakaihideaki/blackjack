@@ -121,6 +121,24 @@ app.post("/api/player/resetAll", async (req, res) => {
       [uid]
     );
 
+    // POST /api/game-results/reset
+app.post("/api/game-results/reset", async (req, res) => {
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: "uid required" });
+
+  try {
+    await pool.query(
+      `DELETE FROM game_results WHERE auth0_user_id = $1`,
+      [uid]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ game_results reset error:", err);
+    res.status(500).json({ error: "failed to reset game results" });
+  }
+});
+
     const updated = await pool.query(
       `SELECT * FROM player WHERE auth0_user_id = $1`,
       [uid]
