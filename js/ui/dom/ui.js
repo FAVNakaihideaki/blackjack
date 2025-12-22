@@ -97,7 +97,7 @@ export function updateButtons({
 /**
  * プレイヤー統計情報の表示（名前はここで変更しない）
  */
-export function renderStats(player) {
+export function renderStats(data = {}) {
   const gamesEl = document.getElementById('total-games');
   const winEl   = document.getElementById('wins');
   const loseEl  = document.getElementById('losses');
@@ -107,23 +107,60 @@ export function renderStats(player) {
 
   if (!gamesEl) return;
 
-  const wins   = player.wins ?? 0;
-  const losses = player.losses ?? 0;
-  const draws  = player.draws ?? 0;
-  const maxChips = player.max_chips ?? 100;
+  /* =========================
+     🟦 ゲストモード
+  ========================= */
+  if (data.guest) {
+    gamesEl.textContent = 0;
+    winEl.textContent   = 0;
+    loseEl.textContent  = 0;
+    drawEl.textContent  = 0;
+    rateEl.textContent  = '0%';
+    maxEl.textContent   = 100;
+    return;
+  }
 
-  // ★ DB に total_games は存在しないので自前で計算
-  const total = wins + losses + draws;
+  /* =========================
+     🟩 player テーブル由来
+  ========================= */
+  if ('wins' in data) {
+    const wins   = data.wins ?? 0;
+    const losses = data.losses ?? 0;
+    const draws  = data.draws ?? 0;
+    const maxChips = data.max_chips ?? 100;
 
-  // ★ 勝率計算
-  const rate = total > 0 ? Math.round((wins / total) * 100) : 0;
+    const total = wins + losses + draws;
+    const rate = total > 0
+      ? Math.round((wins / total) * 100)
+      : 0;
 
-  gamesEl.textContent = total;
-  winEl.textContent   = wins;
-  loseEl.textContent  = losses;
-  drawEl.textContent  = draws;
-  rateEl.textContent  = rate + '%';
-  maxEl.textContent   = maxChips;
+    gamesEl.textContent = total;
+    winEl.textContent   = wins;
+    loseEl.textContent  = losses;
+    drawEl.textContent  = draws;
+    rateEl.textContent  = rate + '%';
+    maxEl.textContent   = maxChips;
+  }
+
+  /* =========================
+     🟨 game_results 集計由来
+     （勝率を上書き）
+  ========================= */
+  if ('totalGames' in data) {
+    rateEl.textContent = `${data.winRate}%`;
+
+    // HTMLがあれば表示（今は無くてもOK）
+    const bjEl = document.getElementById('bj-rate');
+    const ddEl = document.getElementById('dd-rate');
+
+    if (bjEl && 'blackjackRate' in data) {
+      bjEl.textContent = `${data.blackjackRate}%`;
+    }
+
+    if (ddEl && 'doubleRate' in data) {
+      ddEl.textContent = `${data.doubleRate}%`;
+    }
+  }
 }
 
 /**

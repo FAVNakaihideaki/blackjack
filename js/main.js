@@ -220,11 +220,29 @@ async function loadPlayer() {
   renderMessage("データを同期しました");
 }
 
+// 
+async function loadGameStats() {
+  if (!window.USER_ID) return;
+
+  try {
+    const res = await fetch(
+      `/api/game-results/stats?uid=${encodeURIComponent(window.USER_ID)}`
+    );
+    if (!res.ok) return;
+
+    const stats = await res.json();
+    renderStats(stats);
+  } catch (err) {
+    console.error("stats fetch error:", err);
+  }
+}
+
 // ===== アプリ初期処理 =====
 window.addEventListener("load", async () => {
   await initAuth();
   await loadPlayer();
   await loadGameHistory(10);
+  await loadGameStats();
   renderCurrentBet(GameState.bet || 0);
   renderMessage("ベットを選択してください");
 

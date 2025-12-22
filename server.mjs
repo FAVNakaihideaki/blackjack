@@ -278,6 +278,46 @@ app.get("/api/game-results", async (req, res) => {
   }
 });
 
+// GET /api/game-results/stats?uid=xxx
+app.get("/api/game-results/stats", async (req, res) => {
+  const { uid } = req.query;
+  if (!uid) {
+    return res.status(400).json({ error: "uid required" });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        COUNT(*) AS total_games,
+        COUNT(*) FILTER (WHERE result = 'WIN') AS wins,
+        COUNT(*) FILTER (WHERE is_blackjack = true) AS blackjack_count,
+        COUNT(*) FILTER (WHERE is_double = true) AS double_count
+      FROM game_results
+      WHERE auth0_user_id = $1
+      `,
+      [uid]
+    );
+
+    const row = result.rows[0];
+
+    const totalGames = Number(row.total_games);
+    const wins = Number(row.wins);
+    const blackjackCount = Number(row.blackjack_count);
+    const doubleCount = Number(row.double_count);
+
+    res.json({
+      totalGames,
+      winRate: totalGames ? +(wins / totalGames * 100).toFixed(1) : 0,
+      blackjackRate: totalGames ? +(blackjackCount / totalGames * 100).toFixed(1) : 0,
+      doubleRate: totalGames ? +(doubleCount / totalGames * 100).toFixed(1) : 0,
+    });
+  } catch (err) {
+    console.error("❌ stats error:", err);
+    res.status(500).json({ error: "failed to fetch stats" });
+  }
+});
+
 // -----------------------------------------
 // ③ index.html を返す（SPA 対応）
 // -----------------------------------------
