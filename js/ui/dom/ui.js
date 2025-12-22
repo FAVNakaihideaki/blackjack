@@ -111,12 +111,17 @@ export function renderStats(data = {}) {
      🟦 ゲストモード
   ========================= */
   if (data.guest) {
-    gamesEl.textContent = 0;
-    winEl.textContent   = 0;
-    loseEl.textContent  = 0;
-    drawEl.textContent  = 0;
-    rateEl.textContent  = '0%';
-    maxEl.textContent   = 100;
+    const total = data.total_games ?? 0;
+
+    gamesEl.textContent = total;
+    winEl.textContent   = data.wins ?? 0;
+    loseEl.textContent  = data.losses ?? 0;
+    drawEl.textContent  = data.draws ?? 0;
+    rateEl.textContent  =
+      total > 0
+        ? Math.round((data.wins / total) * 100) + '%'
+        : '0%';
+    maxEl.textContent   = data.max_chips ?? 100;
     return;
   }
 

@@ -601,7 +601,6 @@ async function endRound() {
         bet: GameState.bet,
         payout: GameState.chips - GameState.startChips,
 
-        // ★ 追加
         start_chips: GameState.startChips,
         end_chips: GameState.chips,
 
@@ -629,6 +628,10 @@ async function endRound() {
   GameState.lastResult = null;
   renderCurrentBet(0);
   createNextRoundButton();
+
+  if (window.USER_ID) {
+    await loadGameStats();
+  }
 }
 
 /* 次ラウンドボタン生成 */

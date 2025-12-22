@@ -286,3 +286,4 @@ async function loadGameHistory(limit = 10) {
 }
 
 window.loadGameHistory = loadGameHistory;
+window.loadGameStats = loadGameStats;
