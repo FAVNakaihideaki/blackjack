@@ -1,3 +1,4 @@
+import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.esm.js';
 import { bindScene } from '../phaserRenderer.js';
 
 export class GameScene extends Phaser.Scene {
