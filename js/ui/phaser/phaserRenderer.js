@@ -18,7 +18,7 @@ export function renderHands(
   allPlayerHands = null
 ) {
   if (!scene) return;
-
+  console.log("PHASER renderHands");
   scene.clearHands();
 
   // ===== Dealer =====
