@@ -1,12 +1,13 @@
 // ui/renderer.js
 import * as DomRenderer from './dom/domRenderer.js';
-// import * as PhaserRenderer from './phaser/phaserRenderer.js'; // 後で追加
+import * as PhaserRenderer from './phaser/phaserRenderer.js';
 
 let currentRenderer = DomRenderer;
 
 export function setRenderer(type = 'dom') {
-  // 今はDOMのみ。将来 phaserRenderer に切替可能
-  currentRenderer = DomRenderer;
+  currentRenderer = type === 'phaser'
+    ? PhaserRenderer
+    : DomRenderer;
 }
 
 export const renderHands = (...args) =>

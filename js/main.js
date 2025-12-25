@@ -1,4 +1,21 @@
 // main.js
+// ===== imports =====
+import Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.esm.js';
+import { GameScene } from './ui/phaser/scenes/GameScene.js';
+import { setRenderer } from './ui/renderer.js';
+
+// ===== Phaser起動 =====
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: 'game-area', // 既存DOMの中
+  width: 1100,
+  height: 650,
+  backgroundColor: '#0b5a2a',
+  scene: [GameScene],
+});
+
+// Renderer を Phaser に切替
+setRenderer('phaser');
 
 let auth0 = null;
 
