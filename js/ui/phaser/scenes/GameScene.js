@@ -1,3 +1,4 @@
+// js/ui/phaser/scenes/GameScene.js
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.esm.js';
 import { bindScene } from '../phaserRenderer.js';
 
@@ -5,15 +6,31 @@ export class GameScene extends Phaser.Scene {
   constructor() {
     super('GameScene');
     this.cardObjects = [];
+    this.centerX = 0;
   }
 
   create() {
     bindScene(this);
 
-    this.add.text(20, 20, 'BLACKJACK', { fontSize: '28px' });
+    // ★ 画面中央X
+    this.centerX = this.cameras.main.width / 2;
 
-    this.playerLabel = this.add.text(450, 260, 'PLAYER', { fontSize: '18px' });
-    this.dealerLabel = this.add.text(600, 80, 'DEALER', { fontSize: '18px' });
+    // タイトル
+    this.add.text(this.centerX, 16, 'BLACKJACK', {
+      fontSize: '22px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+
+    // DEALER / PLAYER ラベル（中央揃え）
+    this.dealerLabel = this.add.text(this.centerX, 60, 'DEALER', {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+
+    this.playerLabel = this.add.text(this.centerX, 220, 'PLAYER', {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
   }
 
   clearHands() {
@@ -23,22 +40,28 @@ export class GameScene extends Phaser.Scene {
 
   drawCard(card, x, y, active = false) {
     const rect = this.add.rectangle(
-      x, y, 50, 70,
+      x,
+      y,
+      50,
+      70,
       active ? 0x88ff88 : 0xffffff
     ).setStrokeStyle(2, 0x000000);
 
     const text = this.add.text(
-      x - 15, y - 10,
+      x,
+      y,
       `${card.value}${card.suit}`,
       { fontSize: '16px', color: '#000' }
-    );
+    ).setOrigin(0.5);
 
     this.cardObjects.push(rect, text);
   }
 
   drawHiddenCard(x, y) {
     const rect = this.add.rectangle(x, y, 50, 70, 0x444444);
-    const text = this.add.text(x - 8, y - 10, '🂠', { fontSize: '20px' });
+    const text = this.add.text(x, y, '🂠', {
+      fontSize: '20px',
+    }).setOrigin(0.5);
 
     this.cardObjects.push(rect, text);
   }

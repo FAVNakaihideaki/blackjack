@@ -1,5 +1,4 @@
 // js/ui/phaser/phaserRenderer.js
-import { calcHandValue } from '../../core/deck.js';
 import { GameState } from '../../core/gameState.js';
 
 let scene = null;
@@ -18,15 +17,27 @@ export function renderHands(
   allPlayerHands = null
 ) {
   if (!scene) return;
-  console.log("PHASER renderHands");
+
+  console.log('PHASER renderHands');
   scene.clearHands();
+
+  // ★ 中央基準
+  const centerX = scene.centerX;
+  const gap = 60;
+
+  // Dealer の開始X（手札枚数に応じて中央寄せ）
+  const dealerStartX =
+    centerX - ((dealerHand.length - 1) * gap) / 2;
 
   // ===== Dealer =====
   dealerHand.forEach((card, index) => {
+    const x = dealerStartX + index * gap;
+    const y = 120;
+
     if (hideDealerSecond && index === 1) {
-      scene.drawHiddenCard(600 + index * 60, 120);
+      scene.drawHiddenCard(x, y);
     } else {
-      scene.drawCard(card, 600 + index * 60, 120);
+      scene.drawCard(card, x, y);
     }
   });
 
@@ -34,11 +45,17 @@ export function renderHands(
   const hands = allPlayerHands?.length ? allPlayerHands : [playerHand];
 
   hands.forEach((hand, hIdx) => {
+    const playerStartX =
+      centerX - ((hand.length - 1) * gap) / 2;
+
     hand.forEach((card, i) => {
+      const x = playerStartX + i * gap;
+      const y = 260 + hIdx * 90;
+
       scene.drawCard(
         card,
-        450 + i * 60,
-        300 + hIdx * 120,
+        x,
+        y,
         hIdx === GameState.currentHandIndex
       );
     });
