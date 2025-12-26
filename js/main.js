@@ -4,12 +4,10 @@ import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.esm.j
 import { GameScene } from './ui/phaser/scenes/GameScene.js';
 import { setRenderer } from './ui/renderer.js';
 
-// ===== Phaser起動 =====
-const game = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game-area', // 既存DOMの中
-  width: 1100,
-  height: 650,
+new Phaser.Game({
+  parent: 'phaser-layer', 
+  width: 700,
+  height: 360,
   backgroundColor: '#0b5a2a',
   scene: [GameScene],
 });
