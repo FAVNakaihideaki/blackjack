@@ -27,7 +27,7 @@ export class GameScene extends Phaser.Scene {
       color: '#ffffff',
     }).setOrigin(0.5, 0);
 
-    this.playerLabel = this.add.text(this.centerX, 205, 'PLAYER', {
+    this.playerLabel = this.add.text(this.centerX, 215, 'PLAYER', {
       fontSize: '14px',
       color: '#ffffff',
     }).setOrigin(0.5, 0);
