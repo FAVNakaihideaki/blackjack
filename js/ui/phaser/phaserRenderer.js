@@ -32,7 +32,7 @@ export function renderHands(
   // ===== Dealer =====
   dealerHand.forEach((card, index) => {
     const x = dealerStartX + index * gap;
-    const y = 105;
+    const y = 100;
 
     if (hideDealerSecond && index === 1) {
       scene.drawHiddenCard(x, y);
@@ -50,7 +50,7 @@ export function renderHands(
 
     hand.forEach((card, i) => {
       const x = playerStartX + i * gap;
-      const y = 285 + hIdx * 90;
+      const y = 270 + hIdx * 90;
 
       scene.drawCard(
         card,
