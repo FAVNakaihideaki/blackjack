@@ -270,6 +270,8 @@ button:not(:disabled):active {
   margin: 16px auto;
   width: 700px;
   height: 360px;
+
+  transform: translateX(-10px);
 }
 
 #dealer-cards,
