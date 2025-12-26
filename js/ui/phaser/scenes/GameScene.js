@@ -22,12 +22,12 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     // DEALER / PLAYER ラベル（中央揃え）
-    this.dealerLabel = this.add.text(this.centerX, 60, 'DEALER', {
+    this.dealerLabel = this.add.text(this.centerX, 55, 'DEALER', {
       fontSize: '14px',
       color: '#ffffff',
     }).setOrigin(0.5, 0);
 
-    this.playerLabel = this.add.text(this.centerX, 220, 'PLAYER', {
+    this.playerLabel = this.add.text(this.centerX, 205, 'PLAYER', {
       fontSize: '14px',
       color: '#ffffff',
     }).setOrigin(0.5, 0);
