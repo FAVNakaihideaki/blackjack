@@ -1,4 +1,4 @@
-// js/ui/phaser/phaserRenderer.js
+// ui/phaser/phaserRenderer.js
 import { GameState } from '../../core/gameState.js';
 import { calcHandValue } from '../../core/deck.js';
 
@@ -16,16 +16,14 @@ export function renderHands(
 ) {
   if (!scene) return;
 
-  console.log('PHASER renderHands');
   scene.clearHands();
 
   const centerX = scene.centerX;
   const gap = 60;
 
-  // Dealer の開始X（中央寄せ）
+  // ===== Dealer =====
   const dealerStartX = centerX - ((dealerHand.length - 1) * gap) / 2;
 
-  // ===== Dealer =====
   dealerHand.forEach((card, index) => {
     const x = dealerStartX + index * gap;
     const y = 110;
@@ -37,48 +35,48 @@ export function renderHands(
     }
   });
 
+  // Dealer 合計
+  if (!hideDealerSecond && dealerHand.length) {
+    const total = calcHandValue(dealerHand);
+    const t = scene.add.text(centerX, 85, `TOTAL: ${total}`, {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(1000);
+
+    scene.cardObjects.push(t);
+  }
+
   // ===== Player =====
   const hands = allPlayerHands?.length ? allPlayerHands : [playerHand];
+  const activeHand =
+    allPlayerHands?.length
+      ? allPlayerHands[GameState.currentHandIndex]
+      : playerHand;
 
   hands.forEach((hand, hIdx) => {
-    const playerStartX = centerX - ((hand.length - 1) * gap) / 2;
+    const startX = centerX - ((hand.length - 1) * gap) / 2;
 
     hand.forEach((card, i) => {
-      const x = playerStartX + i * gap;
-      const y = 270 + hIdx * 90;
-
-      scene.drawCard(card, x, y, hIdx === GameState.currentHandIndex);
+      scene.drawCard(
+        card,
+        startX + i * gap,
+        270 + hIdx * 90,
+        hIdx === GameState.currentHandIndex
+      );
     });
   });
 
-  // ===== Totals =====
-  // ※カード生成の後に setText してOK（Depthで前面維持）
-  if (scene.dealerTotalText) {
-    if (!hideDealerSecond && dealerHand?.length) {
-      scene.dealerTotalText.setText(`TOTAL: ${calcHandValue(dealerHand)}`);
-      scene.dealerTotalText.setDepth(1000);
-    } else {
-      scene.dealerTotalText.setText('');
-      scene.dealerTotalText.setDepth(1000);
-    }
+  // Player 合計
+  if (activeHand?.length) {
+    const total = calcHandValue(activeHand);
+    const t = scene.add.text(centerX, 245, `TOTAL: ${total}`, {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(1000);
+
+    scene.cardObjects.push(t);
   }
 
-  if (scene.playerTotalText) {
-    const activeHand =
-      allPlayerHands?.length
-        ? (allPlayerHands[GameState.currentHandIndex] ?? playerHand)
-        : playerHand;
-
-    if (activeHand?.length) {
-      scene.playerTotalText.setText(`TOTAL: ${calcHandValue(activeHand)}`);
-      scene.playerTotalText.setDepth(1000);
-    } else {
-      scene.playerTotalText.setText('');
-      scene.playerTotalText.setDepth(1000);
-    }
-  }
-
-  // ラベルも前面に維持（保険）
   scene.dealerLabel?.setDepth?.(1000);
   scene.playerLabel?.setDepth?.(1000);
 }
