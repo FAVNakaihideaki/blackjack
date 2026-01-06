@@ -7,6 +7,10 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
     this.cardObjects = [];
     this.centerX = 0;
+
+    // 合計値テキスト
+    this.dealerTotalText = null;
+    this.playerTotalText = null;
   }
 
   create() {
@@ -28,6 +32,17 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.playerLabel = this.add.text(this.centerX, 215, 'PLAYER', {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+
+    // ★ 合計値（Phaser側で描画）
+    this.dealerTotalText = this.add.text(this.centerX, 90, '', {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5, 0);
+
+    this.playerTotalText = this.add.text(this.centerX, 245, '', {
       fontSize: '14px',
       color: '#ffffff',
     }).setOrigin(0.5, 0);

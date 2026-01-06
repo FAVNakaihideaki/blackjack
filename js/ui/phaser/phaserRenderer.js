@@ -1,5 +1,6 @@
 // js/ui/phaser/phaserRenderer.js
 import { GameState } from '../../core/gameState.js';
+import { calcHandValue } from '../../core/deck.js';
 
 let scene = null;
 
@@ -60,4 +61,28 @@ export function renderHands(
       );
     });
   });
+
+  // ===== Totals (Phaser UI) =====
+  // Dealer合計（伏せカードがある間は表示しない）
+  if (scene.dealerTotalText) {
+    if (!hideDealerSecond && dealerHand?.length) {
+      scene.dealerTotalText.setText(`TOTAL: ${calcHandValue(dealerHand)}`);
+    } else {
+      scene.dealerTotalText.setText('');
+    }
+  }
+
+  // Player合計（アクティブHandを表示）
+  if (scene.playerTotalText) {
+    const activeHand =
+      allPlayerHands?.length
+        ? (allPlayerHands[GameState.currentHandIndex] ?? playerHand)
+        : playerHand;
+
+    if (activeHand?.length) {
+      scene.playerTotalText.setText(`TOTAL: ${calcHandValue(activeHand)}`);
+    } else {
+      scene.playerTotalText.setText('');
+    }
+  }
 }

@@ -2,7 +2,13 @@
 
 import { GameState } from '../core/gameState.js';
 import { createDeck, drawCard, calcHandValue } from '../core/deck.js';
-import { isBlackjack, dealerHasBlackjackChance, isDealerBlackjack, isBust, isSplittable } from '../core/rules.js';
+import {
+  isBlackjack,
+  dealerHasBlackjackChance,
+  isDealerBlackjack,
+  isBust,
+  isSplittable
+} from '../core/rules.js';
 import { hit, stand, doubleDown, split } from '../core/actions.js';
 
 // 🟦 UI抽象レイヤー（PhaserでもDOMでも対応）
@@ -26,6 +32,9 @@ function computeCanDouble(hand, chips, bet) {
 
 /* ベット処理 */
 export function setBet(amount) {
+  // ★ GAME_OVER 中は操作不能
+  if (GameState.state === 'GAME_OVER') return;
+
   if (!['INIT', 'RESULT'].includes(GameState.state)) return;
 
   GameState.bet += amount;
@@ -45,6 +54,12 @@ export function setBet(amount) {
 
 /* ゲーム開始 */
 export async function startGame() {
+  // ★ GAME_OVER 中は開始させない
+  if (GameState.state === 'GAME_OVER') {
+    updateButtons({});
+    return renderMessage('💀 ゲームオーバーです。リセットしてください。');
+  }
+
   if (GameState.bet === 0) return renderMessage('ベットを選択してください');
   if (GameState.chips < GameState.bet) return renderMessage('チップが足りません');
 
@@ -63,7 +78,7 @@ export async function startGame() {
   GameState.state = 'PLAYER_TURN';
   GameState.resetHands();
 
-  //ラウンド開始時のチップを保存する
+  // ラウンド開始時のチップを保存する
   GameState.startChips = GameState.chips;
 
   // ベット分チップを減らす
@@ -525,7 +540,7 @@ async function goNextHand() {
 
   GameState.currentHandIndex = 1;
   GameState.playerHand = GameState.playerHands[1];
-  
+
   const bet2 = GameState.bets[1] ?? GameState.bet;
   GameState.state = 'PLAYER_TURN';
 
@@ -548,7 +563,6 @@ async function goNextHand() {
 
 /* ラウンド終了 */
 async function endRound() {
-
   GameState.state = 'RESULT';
   renderChips(GameState.chips);
   updateButtons({});
@@ -568,6 +582,18 @@ async function endRound() {
 
     saveGuestStats();
     updateGuestStatDisplay(g);
+
+    // ★ ここで GAME OVER 判定（ゲスト）
+    if (GameState.chips <= 0) {
+      GameState.bet = 0;
+      GameState.lastResult = null;
+      renderCurrentBet(0);
+
+      GameState.state = 'GAME_OVER';
+      renderMessage('💀 ゲームオーバー<br>チップがなくなりました。<br>リセットしてください。');
+      updateButtons({});
+      return;
+    }
 
     GameState.bet = 0;
     GameState.lastResult = null;
@@ -591,7 +617,7 @@ async function endRound() {
       })
     });
 
-    /* ② ★ 対局履歴テーブルに INSERT（←追加） */
+    /* ② 対局履歴テーブルに INSERT */
     await fetch('/api/game-result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -624,6 +650,18 @@ async function endRound() {
 
   window.loadGameHistory?.(10);
 
+  // ★ ここで GAME OVER 判定（ログイン）
+  if (GameState.chips <= 0) {
+    GameState.bet = 0;
+    GameState.lastResult = null;
+    renderCurrentBet(0);
+
+    GameState.state = 'GAME_OVER';
+    renderMessage('💀 ゲームオーバー<br>チップがなくなりました。<br>リセットしてください。');
+    updateButtons({});
+    return;
+  }
+
   GameState.bet = 0;
   GameState.lastResult = null;
   renderCurrentBet(0);
@@ -651,6 +689,14 @@ function createNextRoundButton() {
   }
 
   btn.addEventListener('click', () => {
+    // ★ GAME_OVER なら次ラウンド禁止（保険）
+    if (GameState.state === 'GAME_OVER' || GameState.chips <= 0) {
+      renderMessage('💀 ゲームオーバーです。リセットしてください。');
+      updateButtons({});
+      if (container) container.innerHTML = '';
+      return;
+    }
+
     GameState.resetForNextRound();
     renderHands([], [], false);
     renderCurrentBet(0);

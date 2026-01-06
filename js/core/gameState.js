@@ -1,7 +1,7 @@
 // core/gameState.js
 
 export const GameState = {
-  state: 'INIT',            // INIT / PLAYER_TURN / DEALER_TURN / RESULT
+  state: 'INIT',            // INIT / PLAYER_TURN / DEALER_TURN / RESULT / GAME_OVER
   playerHand: [],
   dealerHand: [],
 
