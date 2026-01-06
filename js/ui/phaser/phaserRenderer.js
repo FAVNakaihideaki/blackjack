@@ -73,7 +73,7 @@ function drawPhaserTotals(dealerTotal, playerTotal, hideDealerSecond) {
     scene.cardObjects.push(dealerText);
   }
 
-  const playerText = scene.add.text(scene.centerX, 305, `TOTAL: ${playerTotal}`, {
+  const playerText = scene.add.text(scene.centerX, 330, `TOTAL: ${playerTotal}`, {
     fontSize: '14px',
     color: '#ffffff',
   }).setOrigin(0.5).setDepth(1000);
