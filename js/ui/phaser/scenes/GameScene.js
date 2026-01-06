@@ -35,12 +35,12 @@ export class GameScene extends Phaser.Scene {
     this.cardObjects = [];
   }
 
-  drawCard(card, x, y, active = false) {
-    // ✅ 背景は常に白で統一
+  drawCard(card, x, y) {
+    // 背景：常に白
     const rect = this.add.rectangle(x, y, 50, 70, 0xffffff);
 
-    // ✅ アクティブは枠線で強調（色・太さだけ変える）
-    rect.setStrokeStyle(active ? 4 : 2, active ? 0x00cc66 : 0x000000);
+    // 枠線：常に同じ（黒・太さ2）
+    rect.setStrokeStyle(2, 0x000000);
 
     const text = this.add.text(
       x,
@@ -51,7 +51,6 @@ export class GameScene extends Phaser.Scene {
 
     this.cardObjects.push(rect, text);
   }
-
 
   drawHiddenCard(x, y) {
     const rect = this.add.rectangle(x, y, 50, 70, 0x444444);
