@@ -23,9 +23,11 @@ async function initAuth() {
     domain: "dev-n5rykvdin2zla61p.us.auth0.com",
     clientId: "TLSpVDVgBNzGn4U9P6oEISi7lZTfvjOD",
     authorizationParams: {
-      redirect_uri: "https://blackjack-qv86.onrender.com",
+      redirect_uri: window.location.origin, // ← ★ここが最重要
       prompt: "select_account",
-    }
+    },
+    cacheLocation: "localstorage",
+    useRefreshTokens: true,
   });
 
   // リダイレクト処理

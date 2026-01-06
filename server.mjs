@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import pkg from "pg";
 import path from "path";
@@ -6,7 +7,7 @@ import { fileURLToPath } from "url";
 const { Pool } = pkg;
 const app = express();
 
-// Render の DB 接続（環境変数 DATABASE_URL 使用）
+// DB 接続（環境変数 DATABASE_URL 使用）
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -14,8 +15,9 @@ const pool = new Pool({
 
 // === DB の初期化（テーブル作成） ===
 async function initDB() {
+  // player
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS player (
+    CREATE TABLE IF NOT EXISTS public.player (
       auth0_user_id TEXT PRIMARY KEY,
       chips INTEGER NOT NULL,
       wins INTEGER NOT NULL,
@@ -25,10 +27,26 @@ async function initDB() {
     );
   `);
 
-  console.log("Player table ready");
-}
+  // game_results（無ければ作る：既にあるなら何もしない）
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.game_results (
+      id BIGSERIAL PRIMARY KEY,
+      auth0_user_id TEXT NOT NULL,
+      result TEXT NOT NULL,
+      bet INTEGER,
+      payout INTEGER,
+      is_blackjack BOOLEAN DEFAULT false,
+      is_double BOOLEAN DEFAULT false,
+      is_split BOOLEAN DEFAULT false,
+      start_chips INTEGER,
+      end_chips INTEGER,
+      played_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
 
-initDB();
+  console.log("DB tables ready (player, game_results)");
+}
+initDB().catch((e) => console.error("❌ initDB error:", e));
 
 // __dirname を ES Module で使うための処理
 const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +61,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // -----------------------------------------
-// ② API: /api/player （あなたの Next.js API を Express 化）
+// ② API
 // -----------------------------------------
 
 // GET /api/player
@@ -53,7 +71,7 @@ app.get("/api/player", async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      `SELECT * FROM public.player WHERE auth0_user_id = $1`,
       [uid]
     );
 
@@ -63,13 +81,13 @@ app.get("/api/player", async (req, res) => {
 
     // すべてのログイン方式対応
     await pool.query(
-      `INSERT INTO player (auth0_user_id, chips, wins, losses, draws, max_chips)
+      `INSERT INTO public.player (auth0_user_id, chips, wins, losses, draws, max_chips)
        VALUES ($1, 100, 0, 0, 0, 100)`,
       [uid]
     );
 
     const created = await pool.query(
-      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      `SELECT * FROM public.player WHERE auth0_user_id = $1`,
       [uid]
     );
 
@@ -87,14 +105,14 @@ app.post("/api/player/create", async (req, res) => {
 
   try {
     await pool.query(
-      `INSERT INTO player (auth0_user_id, chips, wins, losses, draws, max_chips)
+      `INSERT INTO public.player (auth0_user_id, chips, wins, losses, draws, max_chips)
        VALUES ($1, 100, 0, 0, 0, 100)
        ON CONFLICT (auth0_user_id) DO NOTHING`,
       [uid]
     );
 
     const result = await pool.query(
-      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      `SELECT * FROM public.player WHERE auth0_user_id = $1`,
       [uid]
     );
     res.json(result.rows[0]);
@@ -111,7 +129,7 @@ app.post("/api/player/resetAll", async (req, res) => {
 
   try {
     await pool.query(
-      `UPDATE player
+      `UPDATE public.player
        SET chips = 100,
            wins = 0,
            losses = 0,
@@ -121,26 +139,8 @@ app.post("/api/player/resetAll", async (req, res) => {
       [uid]
     );
 
-    // POST /api/game-results/reset
-app.post("/api/game-results/reset", async (req, res) => {
-  const { uid } = req.body;
-  if (!uid) return res.status(400).json({ error: "uid required" });
-
-  try {
-    await pool.query(
-      `DELETE FROM game_results WHERE auth0_user_id = $1`,
-      [uid]
-    );
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ game_results reset error:", err);
-    res.status(500).json({ error: "failed to reset game results" });
-  }
-});
-
     const updated = await pool.query(
-      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      `SELECT * FROM public.player WHERE auth0_user_id = $1`,
       [uid]
     );
     res.json(updated.rows[0]);
@@ -161,7 +161,7 @@ app.post("/api/player/update", async (req, res) => {
 
   try {
     await pool.query(
-      `UPDATE player
+      `UPDATE public.player
        SET chips = $1,
            wins = wins + $2,
            losses = losses + $3,
@@ -172,7 +172,7 @@ app.post("/api/player/update", async (req, res) => {
     );
 
     const updated = await pool.query(
-      `SELECT * FROM player WHERE auth0_user_id = $1`,
+      `SELECT * FROM public.player WHERE auth0_user_id = $1`,
       [uid]
     );
     res.json(updated.rows[0]);
@@ -182,6 +182,7 @@ app.post("/api/player/update", async (req, res) => {
   }
 });
 
+// POST /api/game-result
 app.post("/api/game-result", async (req, res) => {
   try {
     const {
@@ -202,7 +203,7 @@ app.post("/api/game-result", async (req, res) => {
 
     await pool.query(
       `
-      INSERT INTO game_results
+      INSERT INTO public.game_results
         (
           auth0_user_id,
           result,
@@ -259,7 +260,7 @@ app.get("/api/game-results", async (req, res) => {
         start_chips,
         end_chips,
         played_at
-      FROM game_results
+      FROM public.game_results
       WHERE auth0_user_id = $1
       ORDER BY played_at DESC, id DESC
       LIMIT $2
@@ -267,13 +268,12 @@ app.get("/api/game-results", async (req, res) => {
       [uid, limit]
     );
 
-    // 🔑 重要：データがなくても「空配列」を返す
+    // データがなくても「空配列」を返す
     return res.json(result.rows);
 
   } catch (err) {
     console.error("❌ game_results fetch error:", err);
-
-    // 🔑 500 を返さない
+    // 500 を返さない（元の方針）
     return res.json([]);
   }
 });
@@ -293,7 +293,7 @@ app.get("/api/game-results/stats", async (req, res) => {
         COUNT(*) FILTER (WHERE result = 'WIN') AS wins,
         COUNT(*) FILTER (WHERE is_blackjack = true) AS blackjack_count,
         COUNT(*) FILTER (WHERE is_double = true) AS double_count
-      FROM game_results
+      FROM public.game_results
       WHERE auth0_user_id = $1
       `,
       [uid]
@@ -315,6 +315,24 @@ app.get("/api/game-results/stats", async (req, res) => {
   } catch (err) {
     console.error("❌ stats error:", err);
     res.status(500).json({ error: "failed to fetch stats" });
+  }
+});
+
+// POST /api/game-results/reset 
+app.post("/api/game-results/reset", async (req, res) => {
+  const { uid } = req.body;
+  if (!uid) return res.status(400).json({ error: "uid required" });
+
+  try {
+    await pool.query(
+      `DELETE FROM public.game_results WHERE auth0_user_id = $1`,
+      [uid]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ game_results reset error:", err);
+    res.status(500).json({ error: "failed to reset game results" });
   }
 });
 
