@@ -8,9 +8,6 @@ export function bindScene(phaserScene) {
   scene = phaserScene;
 }
 
-/**
- * DOM版と「同じ引数」を受け取る
- */
 export function renderHands(
   playerHand,
   dealerHand,
@@ -22,13 +19,11 @@ export function renderHands(
   console.log('PHASER renderHands');
   scene.clearHands();
 
-  // ★ 中央基準
   const centerX = scene.centerX;
   const gap = 60;
 
-  // Dealer の開始X（手札枚数に応じて中央寄せ）
-  const dealerStartX =
-    centerX - ((dealerHand.length - 1) * gap) / 2;
+  // Dealer の開始X（中央寄せ）
+  const dealerStartX = centerX - ((dealerHand.length - 1) * gap) / 2;
 
   // ===== Dealer =====
   dealerHand.forEach((card, index) => {
@@ -46,33 +41,28 @@ export function renderHands(
   const hands = allPlayerHands?.length ? allPlayerHands : [playerHand];
 
   hands.forEach((hand, hIdx) => {
-    const playerStartX =
-      centerX - ((hand.length - 1) * gap) / 2;
+    const playerStartX = centerX - ((hand.length - 1) * gap) / 2;
 
     hand.forEach((card, i) => {
       const x = playerStartX + i * gap;
       const y = 270 + hIdx * 90;
 
-      scene.drawCard(
-        card,
-        x,
-        y,
-        hIdx === GameState.currentHandIndex
-      );
+      scene.drawCard(card, x, y, hIdx === GameState.currentHandIndex);
     });
   });
 
-  // ===== Totals (Phaser UI) =====
-  // Dealer合計（伏せカードがある間は表示しない）
+  // ===== Totals =====
+  // ※カード生成の後に setText してOK（Depthで前面維持）
   if (scene.dealerTotalText) {
     if (!hideDealerSecond && dealerHand?.length) {
       scene.dealerTotalText.setText(`TOTAL: ${calcHandValue(dealerHand)}`);
+      scene.dealerTotalText.setDepth(1000);
     } else {
       scene.dealerTotalText.setText('');
+      scene.dealerTotalText.setDepth(1000);
     }
   }
 
-  // Player合計（アクティブHandを表示）
   if (scene.playerTotalText) {
     const activeHand =
       allPlayerHands?.length
@@ -81,8 +71,14 @@ export function renderHands(
 
     if (activeHand?.length) {
       scene.playerTotalText.setText(`TOTAL: ${calcHandValue(activeHand)}`);
+      scene.playerTotalText.setDepth(1000);
     } else {
       scene.playerTotalText.setText('');
+      scene.playerTotalText.setDepth(1000);
     }
   }
+
+  // ラベルも前面に維持（保険）
+  scene.dealerLabel?.setDepth?.(1000);
+  scene.playerLabel?.setDepth?.(1000);
 }

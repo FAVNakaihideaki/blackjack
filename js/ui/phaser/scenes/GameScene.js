@@ -8,7 +8,6 @@ export class GameScene extends Phaser.Scene {
     this.cardObjects = [];
     this.centerX = 0;
 
-    // 合計値テキスト
     this.dealerTotalText = null;
     this.playerTotalText = null;
   }
@@ -16,36 +15,35 @@ export class GameScene extends Phaser.Scene {
   create() {
     bindScene(this);
 
-    // ★ 画面中央X
     this.centerX = this.cameras.main.width / 2;
 
     // タイトル
     this.add.text(this.centerX, 16, 'BLACKJACK', {
       fontSize: '22px',
       color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(1000);
 
-    // DEALER / PLAYER ラベル（中央揃え）
+    // DEALER / PLAYER ラベル
     this.dealerLabel = this.add.text(this.centerX, 55, 'DEALER', {
       fontSize: '14px',
       color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(1000);
 
     this.playerLabel = this.add.text(this.centerX, 215, 'PLAYER', {
       fontSize: '14px',
       color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(1000);
 
-    // ★ 合計値（Phaser側で描画）
-    this.dealerTotalText = this.add.text(this.centerX, 90, '', {
+    // 合計値（カードより前面に出す）
+    this.dealerTotalText = this.add.text(this.centerX, 75, '', {
       fontSize: '14px',
       color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(1000);
 
-    this.playerTotalText = this.add.text(this.centerX, 245, '', {
+    this.playerTotalText = this.add.text(this.centerX, 235, '', {
       fontSize: '14px',
       color: '#ffffff',
-    }).setOrigin(0.5, 0);
+    }).setOrigin(0.5, 0).setDepth(1000);
   }
 
   clearHands() {
