@@ -116,16 +116,51 @@ export function renderHands(
   // ===== Player =====
   const hands = allPlayerHands?.length ? allPlayerHands : [playerHand];
 
-  hands.forEach((hand, hIdx) => {
+  if (hands.length >= 2) {
+    // ✅ Split時：横並び
+    const baseY = 270;
+    const splitOffset = 150; // 左右の間隔（好みで 130〜180）
+    const centers = [centerX - splitOffset, centerX + splitOffset];
+
+    hands.slice(0, 2).forEach((hand, hIdx) => {
+      const handCenterX = centers[hIdx];
+      const startX = handCenterX - ((hand.length - 1) * gap) / 2;
+
+      hand.forEach((card, i) => {
+        const x = startX + i * gap;
+        const y = baseY;
+        scene.drawCard(card, x, y /* activeは見た目変えないなら渡さなくてOK */);
+      });
+
+      // ✅ HandごとのTOTAL（真下に出す）
+      const total = hand?.length ? calcHandValue(hand) : 0;
+      const t = scene.add.text(handCenterX, baseY + 55, `TOTAL: ${total}`, {
+        fontSize: '14px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(1000);
+
+      scene.cardObjects.push(t);
+    });
+
+  } else {
+    // ✅ 通常：中央寄せ（従来通り）
+    const hand = hands[0] ?? [];
     const playerStartX = centerX - ((hand.length - 1) * gap) / 2;
 
     hand.forEach((card, i) => {
       const x = playerStartX + i * gap;
-      const y = 270 + hIdx * 90;
-
-      scene.drawCard(card, x, y, hIdx === GameState.currentHandIndex);
+      const y = 270;
+      scene.drawCard(card, x, y);
     });
-  });
+
+    const total = hand?.length ? calcHandValue(hand) : 0;
+    const t = scene.add.text(centerX, 325, `TOTAL: ${total}`, {
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(1000);
+
+    scene.cardObjects.push(t);
+  }
 
   // ===== 合計（ロジック） =====
   // ※伏せカード中のDealerは「0」扱いにして、HTMLの表示方針と揃える
