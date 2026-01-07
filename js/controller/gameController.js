@@ -220,7 +220,7 @@ export async function onHit() {
       renderHands(
         GameState.playerHand,
         GameState.dealerHand,
-        false,
+        true,
         GameState.playerHands
       );
 
@@ -328,7 +328,7 @@ export async function onDoubleDown() {
       renderHands(
         GameState.playerHand,
         GameState.dealerHand,
-        false,
+        true,
         GameState.playerHands
       );
 
@@ -368,7 +368,7 @@ export async function onDoubleDown() {
     renderHands(
       GameState.playerHand,
       GameState.dealerHand,
-      false,
+      true,
       GameState.playerHands
     );
 
@@ -547,7 +547,7 @@ async function goNextHand() {
   renderHands(
     GameState.playerHand,
     GameState.dealerHand,
-    false,
+    true,
     GameState.playerHands
   );
 

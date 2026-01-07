@@ -160,11 +160,19 @@ export function renderHands(
   // ① HTML側（Dealer/Player 合計）を更新
   updateDomTotals(dealerTotal, playerTotal);
 
-  // ② Phaser側の合計表示（通常時のみ中央TOTALを出す）
-  if (hands.length < 2) {
-    drawPhaserTotals(dealerTotal, playerTotal, hideDealerSecond);
+  // ② Phaser側の合計表示
+  if (hands.length >= 2) {
+    // Split中：中央Player TOTALは出さない（Hand別TOTALがあるため）
+    // ただし、ディーラーがオープン済みなら dealer TOTAL は出す
+    if (!effectiveHideDealerSecond) {
+      drawDealerTotalOnly(dealerTotal);
+    }
+  } else {
+    // 通常時：中央TOTALを出す
+    drawPhaserTotals(dealerTotal, playerTotal, effectiveHideDealerSecond);
   }
 
+  // ラベルがカードに埋もれないように前面維持（保険）
   scene.dealerLabel?.setDepth?.(1000);
   scene.playerLabel?.setDepth?.(1000);
 }
