@@ -15,6 +15,8 @@ new Phaser.Game({
 // Renderer を Phaser に切替
 setRenderer('phaser');
 
+const INITIAL_CHIPS = 100;
+
 let auth0 = null;
 
 // Auth0初期化
@@ -62,7 +64,7 @@ document.getElementById("logout-btn").onclick = async () => {
   });
 
   window.USER_ID = null;
-  GameState.chips = 100;
+  GameState.chips = INITIAL_CHIPS;
   renderChips(GameState.chips);
 
   loadGuestStats();
@@ -116,6 +118,57 @@ const splitBtn = document.getElementById('split-btn');
 const betBtns = document.querySelectorAll('.bet-btn');
 const resetBtn = document.getElementById('reset-chips-btn');
 
+async function refillChips() {
+  // 共通：ラウンド状態を整える（GAME_OVER解除も兼ねる）
+  GameState.resetForNextRound?.(); // state='INIT', bet=0 など :contentReference[oaicite:7]{index=7}
+  GameState.bet = 0;
+  renderHands([], []);
+  renderCurrentBet(0);
+
+  // ゲスト：戦績/履歴は残して、チップだけ回復
+  if (!window.USER_ID) {
+    loadGuestStats();              // 既存の戦績を読み直す
+    GameState.chips = INITIAL_CHIPS;
+    renderChips(GameState.chips);
+    renderStats({ guest: true });
+    renderMessage("💰 資金を補充しました。ベットを選択してください");
+
+    updateButtons({
+      canStart: false,
+      canBetIncrease: true,
+      canBetDecrease: false,
+    });
+    return;
+  }
+
+  // ログイン：DBのchipsだけ更新（勝敗は加算しない）
+  try {
+    const res = await fetch('/api/player/update', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid: window.USER_ID, chips: INITIAL_CHIPS }),
+    });
+    const data = await res.json();
+
+    GameState.chips = data.chips;
+    renderChips(data.chips);
+    renderStats(data);
+    renderMessage("💰 資金を補充しました。ベットを選択してください");
+
+    updateButtons({
+      canStart: false,
+      canBetIncrease: true,
+      canBetDecrease: false,
+    });
+  } catch (err) {
+    console.error("資金補充エラー:", err);
+    renderMessage("資金補充に失敗しました");
+  }
+}
+
+// refillChips をグローバルに公開する（これでPhaserボタンが効く）
+window.refillChips = refillChips;
+
 // イベント設定
 startBtn?.addEventListener('click', startGame);
 hitBtn?.addEventListener('click', onHit);
@@ -158,7 +211,7 @@ resetBtn?.addEventListener('click', async () => {
 
     localStorage.removeItem("bj_guest_stats");
 
-    GameState.chips = 100;
+    GameState.chips = INITIAL_CHIPS;
     renderChips(GameState.chips);
     renderStats({ guest: true });
 
@@ -203,11 +256,27 @@ resetBtn?.addEventListener('click', async () => {
   }
 });
 
+// GAME OVERメッセージ内のボタン（innerHTMLで生成されるのでイベント委譲で拾う）
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (!(t instanceof HTMLElement)) return;
+
+  if (t.id === 'refill-chips-btn') {
+    refillChips();
+  }
+
+  if (t.id === 'full-reset-btn') {
+    document.getElementById('reset-chips-btn')?.click();
+  }
+});
+
+window.fullReset = () => document.getElementById('reset-chips-btn')?.click();
+
 // プレイヤーデータ読み込み
 async function loadPlayer() {
 
   if (!window.USER_ID) {
-    GameState.chips = 100;
+    GameState.chips = INITIAL_CHIPS;
     renderChips(GameState.chips);
     loadGuestStats();
     renderStats({ guest: true });

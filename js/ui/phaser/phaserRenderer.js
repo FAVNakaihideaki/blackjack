@@ -8,6 +8,11 @@ export function bindScene(phaserScene) {
   scene = phaserScene;
 }
 
+// Game Over 演出（Scene側のオーバーレイを呼ぶ）
+export function showGameOver() {
+  scene?.showGameOverOverlay?.();
+}
+
 /**
  * HTML側の「Dealer（合計:X）」「Player（合計:Y）」を更新
  * - idが不明でも動くように、テキスト置換で拾う

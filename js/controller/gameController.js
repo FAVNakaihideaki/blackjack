@@ -12,7 +12,7 @@ import {
 import { hit, stand, doubleDown, split } from '../core/actions.js';
 
 // 🟦 UI抽象レイヤー（PhaserでもDOMでも対応）
-import { renderHands } from '../ui/renderer.js';
+import { renderHands, showGameOver } from '../ui/renderer.js';
 
 // 🟥 DOM専用 UI（メッセージ・ボタン・チップ）
 import {
@@ -590,8 +590,18 @@ async function endRound() {
       renderCurrentBet(0);
 
       GameState.state = 'GAME_OVER';
-      renderMessage('💀 ゲームオーバー<br>チップがなくなりました。<br>リセットしてください。');
+      renderMessage(`
+      <div class="gameover">
+        <div>💀 ゲームオーバー</div>
+        <div>チップがなくなりました。</div>
+        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+          <button id="refill-chips-btn">資金補充</button>
+          <button id="full-reset-btn">全リセット</button>
+        </div>
+      </div>
+    `);
       updateButtons({});
+      showGameOver();
       return;
     }
 
@@ -657,8 +667,18 @@ async function endRound() {
     renderCurrentBet(0);
 
     GameState.state = 'GAME_OVER';
-    renderMessage('💀 ゲームオーバー<br>チップがなくなりました。<br>リセットしてください。');
+    renderMessage(`
+      <div class="gameover">
+        <div>💀 ゲームオーバー</div>
+        <div>チップがなくなりました。</div>
+        <div style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+          <button id="refill-chips-btn">資金補充</button>
+          <button id="full-reset-btn">全リセット</button>
+        </div>
+      </div>
+    `);
     updateButtons({});
+    showGameOver();
     return;
   }
 

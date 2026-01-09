@@ -2,6 +2,11 @@
 import { calcHandValue } from '../../core/deck.js';
 import { GameState } from '../../core/gameState.js';
 
+// DOM版は演出なし（必要ならここでDOMオーバーレイ実装できる）
+export function showGameOver() {
+  // no-op
+}
+
 export function renderHands(playerHand, dealerHand, hideDealerSecond = false, allPlayerHands = null) {
   const playerArea = document.getElementById('player-cards');
   const dealerArea = document.getElementById('dealer-cards');

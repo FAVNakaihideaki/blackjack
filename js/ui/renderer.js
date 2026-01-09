@@ -15,3 +15,7 @@ export const renderHands = (...args) =>
 
 export const renderGameDetail = (detail) =>
   currentRenderer.renderGameDetail?.(detail);
+
+// Game Over 演出（レンダラー側に委譲）
+export const showGameOver = () =>
+  currentRenderer.showGameOver?.();
