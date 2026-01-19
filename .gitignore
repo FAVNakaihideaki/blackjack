@@ -2,14 +2,19 @@
 .env
 .env.*
 
-# dependencies
+# deps
 node_modules/
 
 # dumps / backups
 *.dump
 *.sql
 
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# accident files / tools
+-files .env
+blackjack-mirror.git/
+bfg-repo-cleaner-*.jar
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
