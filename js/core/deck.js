@@ -48,9 +48,9 @@ function shuffle(deck) {
 /**
  * 1枚引く（グローバル deck を使用）
  */
-export function drawCard() {
-  if (!window.deck || window.deck.length === 0) return null;
-  return window.deck.pop();
+export function drawCard(deck) {
+  if (!deck || deck.length === 0) return null;
+  return deck.pop();
 }
 
 /**

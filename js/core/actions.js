@@ -10,7 +10,7 @@ import { isBust } from './rules.js';
 export function hit() {
   if (GameState.state !== 'PLAYER_TURN') return;
 
-  GameState.playerHand.push(drawCard());
+  GameState.playerHand.push(drawCard(GameState.deck));
 
   if (isBust(GameState.playerHand)) {
     GameState.state = 'RESULT';
@@ -44,7 +44,7 @@ export function doubleDown() {
   GameState.chips -= currentBet;
   GameState.bets[handIndex] = currentBet * 2;
 
-  GameState.playerHand.push(drawCard());
+  GameState.playerHand.push(drawCard(GameState.deck));
 
   if (isBust(GameState.playerHand)) {
     GameState.state = 'RESULT';
@@ -76,21 +76,17 @@ export function split() {
 
   GameState.chips -= GameState.bet;
 
-  const first = [GameState.playerHand[0], drawCard()];
-  const second = [GameState.playerHand[1], drawCard()];
+  const first = [GameState.playerHand[0], drawCard(GameState.deck)];
+  const second = [GameState.playerHand[1], drawCard(GameState.deck)];
 
   GameState.playerHands = [first, second];
 
-  GameState.dealerHands = [
-    [drawCard(), drawCard()],
-    [drawCard(), drawCard()]
-  ];
+  
 
   GameState.bets = [GameState.bet, GameState.bet];
 
   GameState.currentHandIndex = 0;
   GameState.playerHand = GameState.playerHands[0];
-  GameState.dealerHand = GameState.dealerHands[0];
   GameState.hasSplit = true;
 
   return { success: true };

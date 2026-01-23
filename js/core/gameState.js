@@ -4,6 +4,7 @@ export const GameState = {
   state: 'INIT',            // INIT / PLAYER_TURN / DEALER_TURN / RESULT / GAME_OVER
   playerHand: [],
   dealerHand: [],
+  deck: [],
 
   // スプリット対応
   playerHands: [],

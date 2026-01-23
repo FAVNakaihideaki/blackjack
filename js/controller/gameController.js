@@ -30,6 +30,55 @@ function computeCanDouble(hand, chips, bet) {
   return hand.length === 2 && chips >= bet;
 }
 
+// ✅ 全ハンドがバーストしているか（split/通常両対応）
+function allHandsBust() {
+  const hands =
+    GameState.playerHands && GameState.playerHands.length > 0
+      ? GameState.playerHands
+      : [GameState.playerHand];
+
+  return hands.every((h) => isBust(h));
+}
+
+// ✅ dealerTurn を呼ぶか、全BUSTなら即 endRound する
+async function dealerTurnOrEndIfAllBust() {
+  if (allHandsBust()) {
+    updateButtons({});
+    GameState.lastResult = 'LOSE';
+
+    // ✅ dealerTurn をスキップする代わりに、結果の要約だけは出す
+    const summary = buildAllBustResultSummary();
+    renderMessage(`結果 : ${summary}  ｜ Total: ${GameState.chips}`);
+    await wait(900); // 体感：800〜1000msが見やすい
+    
+    await endRound();
+    return;
+  }
+
+  await dealerTurn();
+}
+
+function buildAllBustResultSummary() {
+  const hands =
+    GameState.playerHands && GameState.playerHands.length > 0
+      ? GameState.playerHands
+      : [GameState.playerHand];
+
+  const bets =
+    GameState.bets && GameState.bets.length > 0
+      ? GameState.bets
+      : [GameState.bet];
+
+  const isSplit = hands.length >= 2;
+
+  const parts = hands.map((_, i) => {
+    const label = isSplit ? `Hand${i + 1} ` : '';
+    return `💥 ${label}BUST  (-${bets[i]})`;
+  });
+
+  return parts.join(' / ');
+}
+
 /* ベット処理 */
 export function setBet(amount) {
   // ★ GAME_OVER 中は操作不能
@@ -69,9 +118,9 @@ export async function startGame() {
     btn.classList.add('disabled');
   });
 
-  // デッキ確認（少なければ再作成）
-  if (!window.deck || window.deck.length < 50) {
-    window.deck = createDeck(8);
+  // デッキが無い / 残りが少ないならリシャッフル
+  if (!GameState.deck || GameState.deck.length < 50) {
+    GameState.deck = createDeck(8);
     renderMessage('山札をリシャッフルしました');
   }
 
@@ -86,10 +135,10 @@ export async function startGame() {
   renderChips(GameState.chips);
 
   // 初期配布
-  GameState.playerHand = [drawCard(), drawCard()];
-  GameState.dealerHand = [drawCard(), drawCard()];
+  GameState.playerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
+  GameState.dealerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
 
-  console.log(`🃏 残りデッキ枚数: ${window.deck.length}`);
+  console.log(`🃏 残りデッキ枚数: ${GameState.deck.length}`);
 
   renderHands(GameState.playerHand, GameState.dealerHand, true);
   updateButtons({
@@ -139,7 +188,7 @@ export async function startGame() {
       renderMessage(`🃏 BLACKJACK  +${reward}  / Total: ${GameState.chips}`);
 
       GameState.lastResult = 'WIN';
-      endRound();
+      await endRound();
       return;
     }
 
@@ -158,7 +207,7 @@ export async function startGame() {
       renderMessage('😐 両者ブラックジャック → 引き分け');
 
       GameState.lastResult = 'DRAW';
-      endRound();
+      await endRound();
       return;
     }
 
@@ -169,7 +218,7 @@ export async function startGame() {
     renderMessage(`🎉 ブラックジャック勝ち！ +${reward}`);
 
     GameState.lastResult = 'WIN';
-    endRound();
+    await endRound();
     return;
   }
 }
@@ -186,7 +235,7 @@ export async function onHit() {
 
   hit();
 
-  console.log(`🃏 残りデッキ枚数: ${window.deck.length}`);
+  console.log(`🃏 残りデッキ枚数: ${GameState.deck.length}`);
 
   renderHands(
     GameState.playerHand,
@@ -202,7 +251,9 @@ export async function onHit() {
   // バースト処理
   // =========================
   if (isBust(GameState.playerHand)) {
-    renderMessage(`💥 Hand${currentIndex + 1} BUST`);
+    const isSplit = GameState.playerHands.length === 2;
+    const label = isSplit ? `Hand${currentIndex + 1} ` : 'Hand ';
+    renderMessage(`💥 ${label}BUST`);
     await wait(800);
 
     // Hand1のみバースト → Hand2へ進む
@@ -235,9 +286,7 @@ export async function onHit() {
     }
 
     // 👉 すべて終了 → ディーラーターンへ
-    await dealerTurn();
-    GameState.state = 'RESULT';
-    updateButtons({});
+    await dealerTurnOrEndIfAllBust();
     return;
   }
 
@@ -273,11 +322,10 @@ export async function onStand() {
 
   // 🔹ディーラーターンへ
   updateButtons({}); // ボタンすべて無効
-  await dealerTurn();
+  await dealerTurnOrEndIfAllBust();
 
   // 🔹結果表示状態へ
-  GameState.state = 'RESULT';
-  updateButtons({}); // 結果表示中は全無効
+  return;
 }
 
 /* DOUBLE DOWN */
@@ -310,8 +358,9 @@ export async function onDoubleDown() {
   // 🔹 Bust（バースト）
   // =============================
   if (result?.bust) {
-
-    renderMessage(`💥 Hand${idx + 1} BUST`);
+    const isSplit = GameState.playerHands.length === 2;
+    const label = isSplit ? `Hand${idx + 1} ` : 'Hand ';
+    renderMessage(`💥 ${label}BUST`);
     await wait(800);
 
     // Hand1 → Hand2へ移行
@@ -343,9 +392,7 @@ export async function onDoubleDown() {
     }
 
     // 全Hand終了 → Dealerへ
-    await dealerTurn();
-    GameState.state = 'RESULT';
-    updateButtons({});
+    await dealerTurnOrEndIfAllBust();
     return;
   }
 
@@ -385,9 +432,8 @@ export async function onDoubleDown() {
   }
 
   // Hand2 or 通常 → Dealer
-  await dealerTurn();
-  GameState.state = 'RESULT';
-  updateButtons({});
+  await dealerTurnOrEndIfAllBust();
+  return;
 }
 
 /* SPLIT */
@@ -456,9 +502,9 @@ async function dealerTurn() {
 
   // 17未満なら連続で HIT
   while (calcHandValue(GameState.dealerHand) < 17) {
-    GameState.dealerHand.push(drawCard());
+    GameState.dealerHand.push(drawCard(GameState.deck));
 
-    console.log(`🃏 残りデッキ枚数: ${window.deck.length}`);
+    console.log(`🃏 残りデッキ枚数: ${GameState.deck.length}`);
 
     renderHands(
       GameState.playerHand,
@@ -495,20 +541,22 @@ async function dealerTurn() {
     const hand = hands[i];
     const playerValue = calcHandValue(hand);
     const bet = bets[i];
+    const isSplit = hands.length >= 2;
+    const label = isSplit ? `Hand${i + 1} ` : 'Hand ';
 
     let text = '';
 
     if (playerValue > 21) {
-      text = `💥 Hand${i + 1} BUST  (-${bet})`;
+      text = `💥 ${label}BUST  (-${bet})`;
     } else if (dealerValue > 21 || playerValue > dealerValue) {
       const gain = bet * 2;
       GameState.chips += gain;
-      text = `🎉 Hand${i + 1} WIN  (+${gain})`;
+      text = `🎉 ${label}WIN  (+${gain})`;
     } else if (playerValue < dealerValue) {
-      text = `💀 Hand${i + 1} LOSE  (-${bet})`;
+      text = `💀 ${label}LOSE  (-${bet})`;
     } else {
       GameState.chips += bet;
-      text = `😐 Hand${i + 1} PUSH (+${bet})`;
+      text = `😐 ${label}PUSH (+${bet})`;
     }
 
     renderMessage(text);
@@ -530,7 +578,7 @@ async function dealerTurn() {
 
   updateButtons({}); // 🔹結果画面でも全無効のまま
 
-  endRound();
+  await endRound();
 }
 
 /* スプリット次の手へ */

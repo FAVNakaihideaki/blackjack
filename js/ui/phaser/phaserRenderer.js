@@ -48,7 +48,7 @@ function updateDomTotals(dealerTotal, playerTotal) {
       if (!t) continue;
 
       if (t.includes(label) && t.includes('合計:')) {
-        el.textContent = t.replace(/合計:\s*\d+/g, `合計:${value}`);
+        el.textContent = t.replace(/合計:\s*(\d+|\?)/g, `合計:${value}`);
         return true;
       }
     }
@@ -63,21 +63,18 @@ function updateDomTotals(dealerTotal, playerTotal) {
  * Phaser側に合計を表示（毎回生成して cardObjects に入れる）
  * - Scene常駐Textの参照ズレ問題を避ける
  */
-function drawPhaserTotals(dealerTotal, playerTotal, hideDealerSecond) {
+function drawPhaserTotals(dealerTotalDisplay, playerTotal, hideDealerSecond) {
   if (!scene) return;
 
-  // Dealerは伏せカード中は出さない
-  if (!hideDealerSecond) {
-    const dealerText = scene.add
-      .text(scene.centerX, 165, `TOTAL: ${dealerTotal}`, {
-        fontSize: '14px',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5)
-      .setDepth(1000);
-
-    scene.cardObjects.push(dealerText);
-  }
+  // Dealerは伏せ中でも「TOTAL: ?」を表示してDOMと統一
+  const dealerText = scene.add
+    .text(scene.centerX, 165, `TOTAL: ${dealerTotalDisplay}`, {
+      fontSize: '14px',
+      color: '#ffffff',
+    })
+    .setOrigin(0.5)
+    .setDepth(1000);
+  scene.cardObjects.push(dealerText);
 
   const playerText = scene.add
     .text(scene.centerX, 330, `TOTAL: ${playerTotal}`, {
@@ -93,11 +90,11 @@ function drawPhaserTotals(dealerTotal, playerTotal, hideDealerSecond) {
 /**
  * Split時でも「ディーラーTOTALだけ」は表示したい（Hand別TOTALは別で出してるため）
  */
-function drawDealerTotalOnly(dealerTotal) {
+function drawDealerTotalOnly(dealerTotalDisplay) {
   if (!scene) return;
 
   const dealerText = scene.add
-    .text(scene.centerX, 165, `TOTAL: ${dealerTotal}`, {
+    .text(scene.centerX, 165, `TOTAL: ${dealerTotalDisplay}`, {
       fontSize: '14px',
       color: '#ffffff',
     })
@@ -190,11 +187,11 @@ export function renderHands(playerHand, dealerHand, hideDealerSecond = false, al
   }
 
   // ===== 合計（ロジック） =====
-  // ※伏せカード中のDealerは「0」扱いにしてHTML表示方針と揃える
-  const dealerTotal =
-    !effectiveHideDealerSecond && dealerHand?.length
-      ? calcHandValue(dealerHand)
-      : 0;
+  // Dealerは伏せ中は「?」に統一（DOMと同じ）
+  const dealerTotalDisplay =
+    effectiveHideDealerSecond
+      ? (dealerHand?.length ? '?' : 0)
+      : (dealerHand?.length ? calcHandValue(dealerHand) : 0);
 
   // PlayerはSplit時は active hand
   const activeHand =
@@ -205,18 +202,16 @@ export function renderHands(playerHand, dealerHand, hideDealerSecond = false, al
   const playerTotal = activeHand?.length ? calcHandValue(activeHand) : 0;
 
   // ① HTML側（Dealer/Player 合計）を更新
-  updateDomTotals(dealerTotal, playerTotal);
+  updateDomTotals(dealerTotalDisplay, playerTotal);
 
   // ② Phaser側の合計表示
   if (hands.length >= 2) {
     // Split中：中央Player TOTALは出さない（Hand別TOTALがあるため）
-    // ただし、ディーラーがオープン済みなら dealer TOTAL は出す
-    if (!effectiveHideDealerSecond) {
-      drawDealerTotalOnly(dealerTotal);
-    }
+    // Dealer TOTAL は split中でも常に表示（伏せ中は ?）
+    drawDealerTotalOnly(dealerTotalDisplay);
   } else {
     // 通常時：中央TOTALを出す
-    drawPhaserTotals(dealerTotal, playerTotal, effectiveHideDealerSecond);
+    drawPhaserTotals(dealerTotalDisplay, playerTotal, effectiveHideDealerSecond);
   }
 
   // ラベルがカードに埋もれないように前面維持（保険）
