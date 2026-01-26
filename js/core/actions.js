@@ -83,12 +83,12 @@ export function split() {
 
   GameState.chips -= GameState.bet;
 
-  const first = [GameState.playerHand[0], drawCard(GameState.deck)];
-  const second = [GameState.playerHand[1], drawCard(GameState.deck)];
+  // 修正：ここでは「カード配布」を行わず、単に分けるだけ
+  // （演出のために gameController 側で1枚ずつ drawCard させる）
+  const first = [GameState.playerHand[0]];
+  const second = [GameState.playerHand[1]];
 
   GameState.playerHands = [first, second];
-
-  
 
   GameState.bets = [GameState.bet, GameState.bet];
 
