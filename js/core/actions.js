@@ -60,6 +60,11 @@ export function doubleDown() {
  */
 export function split() {
   if (GameState.state !== 'PLAYER_TURN') return { error: 'INVALID' };
+  // Splitの二重実行ガード（連打/二重バインド対策）
+  // if (GameState.hasSplit || (GameState.playerHands && GameState.playerHands.length)) {
+  //  return { error: 'ALREADY_SPLIT' };
+  // }
+
   if (GameState.playerHand.length !== 2) return { error: 'NOT_TWO_CARDS' };
 
   const getValue = (card) => {
@@ -67,6 +72,8 @@ export function split() {
     if (card.value === 'A') return 11;
     return parseInt(card.value, 10);
   };
+
+  console.log('[split] called / deck before:', GameState.deck.length);
 
   const v1 = getValue(GameState.playerHand[0]);
   const v2 = getValue(GameState.playerHand[1]);

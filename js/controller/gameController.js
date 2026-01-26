@@ -103,6 +103,12 @@ export function setBet(amount) {
 
 /* ゲーム開始 */
 export async function startGame() {
+  console.log('[startGame] called', {
+    state: GameState.state,
+    bet: GameState.bet,
+    chips: GameState.chips,
+    deck: GameState.deck?.length
+  });
   // ★ GAME_OVER 中は開始させない
   if (GameState.state === 'GAME_OVER') {
     updateButtons({});
@@ -137,6 +143,12 @@ export async function startGame() {
   // 初期配布
   GameState.playerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
   GameState.dealerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
+
+  console.log('[deal] after initial deal', {
+    deck: GameState.deck.length,
+    player: GameState.playerHand.map(c => `${c.value}${c.suit}`),
+    dealer: GameState.dealerHand.map(c => `${c.value}${c.suit}`)
+  });
 
   console.log(`🃏 残りデッキ枚数: ${GameState.deck.length}`);
 
@@ -438,7 +450,31 @@ export async function onDoubleDown() {
 
 /* SPLIT */
 export function onSplit() {
+  console.log('[onSplit] called', {
+    state: GameState.state,
+    hasSplit: GameState.hasSplit,
+    playerHandsLen: GameState.playerHands?.length,
+    deck: GameState.deck?.length
+  });
+
   const res = split();
+
+  if (res?.error === 'ALREADY_SPLIT') {
+    return renderMessage('すでにスプリット済みです');
+  }
+
+  console.log('[onSplit] after split()', {
+    res,
+    hasSplit: GameState.hasSplit,
+    playerHandsLen: GameState.playerHands?.length,
+    deck: GameState.deck?.length
+  });
+
+  // ✅ split後にディーラー手札が変わってないか確認
+  console.log(
+    '[onSplit] dealerHand check',
+    GameState.dealerHand.map(c => `${c.value}${c.suit}`)
+  );
 
   if (res?.error === 'NOT_SAME_VALUE') {
     return renderMessage('同じ数字のみスプリット可');
