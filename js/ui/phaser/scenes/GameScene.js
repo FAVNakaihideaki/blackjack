@@ -76,7 +76,7 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0, 0);
 
     const title = this.add
-      .text(w / 2, h / 2 - 28, 'GAME OVER', {
+      .text(w / 2, h / 2 - 40, 'GAME OVER', {
         fontSize: '42px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -84,7 +84,7 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const sub = this.add
-      .text(w / 2, h / 2 - 22, 'チップが0になりました', {
+      .text(w / 2, h / 2 + 10, 'チップが0になりました', {
         fontSize: '16px',
         color: '#ffffff',
       })
@@ -95,7 +95,7 @@ export class GameScene extends Phaser.Scene {
       .rectangle(0, 0, w, h, 0x000000, 0)
       .setOrigin(0, 0)
       .setInteractive();
-    blocker.on('pointerdown', () => {});
+    blocker.on('pointerdown', () => { });
 
     const makeButton = (label, y, onClick) => {
       const bw = 320;
@@ -119,32 +119,32 @@ export class GameScene extends Phaser.Scene {
     };
 
     // ボタン① 資金補充（戦績は継続）
-const refillY = h / 2 + 40;
-const refill = makeButton('資金補充（戦績は継続）', refillY, async () => {
-  try {
-    if (typeof window.refillChips === "function") {
-      await window.refillChips();
-    } else {
-      console.error("[GameOver] window.refillChips が未定義です");
-      // 念のためDOM側にフォールバック（存在するなら）
-      document.getElementById("refill-chips-btn")?.click();
-    }
-  } finally {
-    this.hideGameOverOverlay();
-  }
-});
+    const refillY = h / 2 + 40;
+    const refill = makeButton('資金補充（戦績は継続）', refillY, async () => {
+      try {
+        if (typeof window.refillChips === "function") {
+          await window.refillChips();
+        } else {
+          console.error("[GameOver] window.refillChips が未定義です");
+          // 念のためDOM側にフォールバック（存在するなら）
+          document.getElementById("refill-chips-btn")?.click();
+        }
+      } finally {
+        this.hideGameOverOverlay();
+      }
+    });
 
-// ボタン② 全リセット（戦績も履歴も初期化）
-const resetY = h / 2 + 98;
-const reset = makeButton('全リセット（戦績も履歴も初期化）', resetY, () => {
-  if (typeof window.fullReset === "function") {
-    window.fullReset();
-  } else {
-    console.error("[GameOver] window.fullReset が未定義です");
-    document.getElementById('reset-chips-btn')?.click();
-  }
-  this.hideGameOverOverlay();
-});
+    // ボタン② 全リセット（戦績も履歴も初期化）
+    const resetY = h / 2 + 98;
+    const reset = makeButton('全リセット（戦績も履歴も初期化）', resetY, () => {
+      if (typeof window.fullReset === "function") {
+        window.fullReset();
+      } else {
+        console.error("[GameOver] window.fullReset が未定義です");
+        document.getElementById('reset-chips-btn')?.click();
+      }
+      this.hideGameOverOverlay();
+    });
 
     this.gameOverOverlay = this.add
       .container(0, 0, [

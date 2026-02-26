@@ -5,7 +5,7 @@ import { GameScene } from './ui/phaser/scenes/GameScene.js';
 import { setRenderer } from './ui/renderer.js';
 
 new Phaser.Game({
-  parent: 'phaser-layer', 
+  parent: 'phaser-layer',
   width: 700,
   height: 360,
   backgroundColor: '#0b5a2a',
@@ -68,7 +68,7 @@ document.getElementById("logout-btn").onclick = async () => {
   renderChips(GameState.chips);
 
   loadGuestStats();
-  renderStats({ guest: true });
+  renderStats({ guest: true, ...GameState.guestStats });
 
   if (document.getElementById('player-name'))
     document.getElementById('player-name').textContent = "Guest";
@@ -130,7 +130,7 @@ async function refillChips() {
     loadGuestStats();              // 既存の戦績を読み直す
     GameState.chips = INITIAL_CHIPS;
     renderChips(GameState.chips);
-    renderStats({ guest: true });
+    renderStats({ guest: true, ...GameState.guestStats });
     renderMessage("💰 資金を補充しました。ベットを選択してください");
 
     updateButtons({
@@ -182,6 +182,12 @@ betBtns.forEach(btn =>
 // リセットボタン
 resetBtn?.addEventListener('click', async () => {
 
+  // ラウンド中は操作不能（バグ防止）
+  if (['PLAYER_TURN', 'DEALER_TURN'].includes(GameState.state)) {
+    renderMessage('⚠ ラウンド中はリセットできません');
+    return;
+  }
+
   /* =========================
      共通：ラウンド状態リセット
   ========================= */
@@ -213,7 +219,7 @@ resetBtn?.addEventListener('click', async () => {
 
     GameState.chips = INITIAL_CHIPS;
     renderChips(GameState.chips);
-    renderStats({ guest: true });
+    renderStats({ guest: true, ...GameState.guestStats });
 
     renderGameHistory([]); // 念のためクリア
     renderMessage("ゲストデータを初期化しました");
@@ -279,7 +285,7 @@ async function loadPlayer() {
     GameState.chips = INITIAL_CHIPS;
     renderChips(GameState.chips);
     loadGuestStats();
-    renderStats({ guest: true });
+    renderStats({ guest: true, ...GameState.guestStats });
     const nameEl = document.getElementById('player-name');
     if (nameEl) nameEl.textContent = "Guest";
     renderMessage("ゲストモードです");

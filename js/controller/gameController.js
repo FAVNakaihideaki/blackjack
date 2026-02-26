@@ -50,7 +50,7 @@ async function dealerTurnOrEndIfAllBust() {
     const summary = buildAllBustResultSummary();
     renderMessage(`結果 : ${summary}  ｜ Total: ${GameState.chips}`);
     await wait(900); // 体感：800〜1000msが見やすい
-    
+
     await endRound();
     return;
   }
@@ -103,6 +103,12 @@ export function setBet(amount) {
 
 /* ゲーム開始 */
 export async function startGame() {
+  console.log('[startGame] called', {
+    state: GameState.state,
+    bet: GameState.bet,
+    chips: GameState.chips,
+    deck: GameState.deck?.length
+  });
   // ★ GAME_OVER 中は開始させない
   if (GameState.state === 'GAME_OVER') {
     updateButtons({});
@@ -138,6 +144,12 @@ export async function startGame() {
   GameState.playerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
   GameState.dealerHand = [drawCard(GameState.deck), drawCard(GameState.deck)];
 
+  console.log('[deal] after initial deal', {
+    deck: GameState.deck.length,
+    player: GameState.playerHand.map(c => `${c.value}${c.suit}`),
+    dealer: GameState.dealerHand.map(c => `${c.value}${c.suit}`)
+  });
+
   console.log(`🃏 残りデッキ枚数: ${GameState.deck.length}`);
 
   renderHands(GameState.playerHand, GameState.dealerHand, true);
@@ -168,10 +180,9 @@ export async function startGame() {
     <b>Stand：</b> 現在の手札で勝負する<br>
     <b>Double Down：</b> ベットを倍にして1枚だけ引く（最初の2枚のときのみ）<br>
     <b>Split：</b> 同じ点数のカードなら2手に分けてプレイ（例：10とKなど）<br>
-    ${
-      !canSplit
-        ? `<br><span style="color:#ffb347;">※ 今回の手札では Split はできません</span>`
-        : ''
+    ${!canSplit
+      ? `<br><span style="color:#ffb347;">※ 今回の手札では Split はできません</span>`
+      : ''
     }
   `);
 
@@ -309,6 +320,11 @@ export async function onHit() {
 
 /* STAND */
 export async function onStand() {
+  if (GameState.state !== 'PLAYER_TURN') return;
+
+  // 🔹ボタンを即ロック（連打防止）
+  updateButtons({});
+
   stand();
 
   // 🔹Split中かつ1つ目の手札なら Hand2へ
@@ -321,7 +337,6 @@ export async function onStand() {
   }
 
   // 🔹ディーラーターンへ
-  updateButtons({}); // ボタンすべて無効
   await dealerTurnOrEndIfAllBust();
 
   // 🔹結果表示状態へ
@@ -345,7 +360,11 @@ export async function onDoubleDown() {
 
   // チップ反映
   renderChips(GameState.chips);
-  renderCurrentBet(currentBet);
+  // Split中は全ハンドの合計bet額を表示
+  const displayBet = GameState.hasSplit
+    ? GameState.bets.reduce((a, b) => a + b, 0)
+    : currentBet;
+  renderCurrentBet(displayBet);
 
   renderHands(
     GameState.playerHand,
@@ -437,29 +456,79 @@ export async function onDoubleDown() {
 }
 
 /* SPLIT */
-export function onSplit() {
+export async function onSplit() {
+  console.log('[onSplit] called', {
+    state: GameState.state,
+    hasSplit: GameState.hasSplit,
+    deck: GameState.deck?.length
+  });
+
+  // 1. ロジック上の分割実行（カード配布はしない）
   const res = split();
 
+  if (res?.error === 'ALREADY_SPLIT') {
+    return renderMessage('すでにスプリット済みです');
+  }
   if (res?.error === 'NOT_SAME_VALUE') {
     return renderMessage('同じ数字のみスプリット可');
   }
-
   if (res?.error === 'NOT_ENOUGH_CHIPS') {
     return renderMessage('チップが足りません');
   }
 
-  // チップ更新
-  renderChips(GameState.chips);
+  // UI操作を一時停止
+  updateButtons({});
 
-  // 手札UI更新
+  // 2. まず分割された状態（各1枚）を描画
+  renderChips(GameState.chips);
   renderHands(
     GameState.playerHand,
     GameState.dealerHand,
     true,
     GameState.playerHands
   );
+  renderMessage('スプリットしました！');
+  await wait(800);
 
-  renderMessage(`スプリット！ Hand1 をプレイ中`);
+  // 3. Hand1 にカードを配る
+  renderMessage('Hand1 にカードを配ります...');
+  await wait(600);
+
+  // Hand1 は index 0
+  GameState.playerHands[0].push(drawCard(GameState.deck));
+
+  // 描画更新
+  renderHands(
+    GameState.playerHand, // 内部で currentHandIndex=0 なので Hand1 が渡るはずだが念のため
+    GameState.dealerHand,
+    true,
+    GameState.playerHands
+  );
+  await wait(800);
+
+  // 4. Hand2 にカードを配る
+  renderMessage('Hand2 にカードを配ります...');
+  await wait(600);
+
+  // Hand2 は index 1
+  GameState.playerHands[1].push(drawCard(GameState.deck));
+
+  // 描画更新
+  renderHands(
+    GameState.playerHand,
+    GameState.dealerHand,
+    true,
+    GameState.playerHands
+  );
+  await wait(800);
+
+  // 5. プレイ開始（Hand1）
+  renderMessage(`Hand1 をプレイ中`);
+
+  console.log('[onSplit] hands ready', {
+    h1: GameState.playerHands[0].length,
+    h2: GameState.playerHands[1].length
+  });
 
   // 🔹UI更新（状態に応じてフラグ設定）
   updateButtons({
@@ -682,7 +751,9 @@ async function endRound() {
       body: JSON.stringify({
         uid: window.USER_ID,
         result: GameState.lastResult,
-        bet: GameState.bet,
+        bet: GameState.hasSplit
+          ? GameState.bets.reduce((a, b) => a + b, 0)
+          : GameState.bet,
         payout: GameState.chips - GameState.startChips,
 
         start_chips: GameState.startChips,
